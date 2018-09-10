@@ -71,22 +71,19 @@ fun transExp(venv, tenv) =
 		| trexp(IntExp(i, _)) = {exp=SCAF, ty=TInt}
 		| trexp(StringExp(s, _)) = {exp=SCAF, ty=TString}
 		| trexp(CallExp({func, args}, nl)) =(*COMPLETADO*)
-            let
-                val {level,label,formals,result,extern} = 
-                    case tabBusca(func,venv) of
-                        SOME (Func t) => t
-                        | _ => error("Funcion ("^func^") no definida",nl)
-                val tArgs = map (fn(a) = let val {exp, ty=tipoArg} = trexp(a) in tipoArg) args
-                fun comparar ([],[]) = ()
-                    | comparar ([],_) = error("No hay suficientes argumentos para la funcion ("^func^")",nl)
-                    | comparar (_,[]) = error("Hay demasiados argumentos para la funcion ("^func^")",nl)
-                    | comparar ((x::xs),(y::ys)) = if tiposIiguales x y
-                                                   then comparar(xs,ys)
-                                                   else error("Los tipos de los argumentos de la funcion no coinciden con los tipos de los argumentos pasados",nl)
-                val _ = comparar(tArgs,formals)
-             in
-                {exp=SCAF, ty=result}
-             end
+			let
+				val {level,label,formals,result,extern} = 
+					case tabBusca(func,venv) of
+						SOME (Func t) => t
+						| _ => error("Funcion ("^func^") no definida",nl)
+				val tArgs = map (fn(a) = let val {exp, ty=tipoArg} = trexp(a) in tipoArg) args
+				fun comparar ([],[]) = ()
+					| comparar ([],_) = error("No hay suficientes argumentos para la funcion ("^func^")",nl)
+					| comparar (_,[]) = error("Hay demasiados argumentos para la funcion ("^func^")",nl)
+					| comparar ((x::xs),(y::ys)) = if tiposIiguales x y then comparar(xs,ys)
+													else error("Los tipos de los argumentos de la funcion no coinciden con los tipos de los argumentos pasados",nl)
+				val _ = comparar(tArgs,formals)
+			in {exp=SCAF, ty=result} end
 		| trexp(OpExp({left, oper=EqOp, right}, nl)) =
 			let
 				val {exp=_, ty=tyl} = trexp left
@@ -179,20 +176,16 @@ fun transExp(venv, tenv) =
 				else error("El cuerpo de un while no puede devolver un valor", nl)
 			end
 		| trexp(ForExp({var, escape, lo, hi, body}, nl)) =(*COMPLETADO*)
-            let
-                val {exp = explo, ty = tlo} = trexp lo
-                val {exp = exphi, ty = thi} = trexp hi
-                val _ = if (tiposIguales(tlo,TInt) andalso tiposIguales(thi,TInt)) 
-                            then ()
-                            else error("Los indices del for deben ser enteros",nl)
-                val venv' = tabRInserta(var,VIntro,venv)
-                val {exp = expbody, ty = tbody} = transExp venv' tenv body
-                if (tiposIguales(tbody,TUnit))
-                    then ()
-                    else error("El tipo del cuerpo del for debe ser TUnit",nl)
-            in
-                {exp=SCAF, ty=TUnit}
-            end
+			let
+				val {exp = explo, ty = tlo} = trexp lo
+				val {exp = exphi, ty = thi} = trexp hi
+				val _ = if tlo = TInt andalso thi=TInt then ()
+						else error("Los indices del for deben ser enteros",nl)
+				val venv' = tabRInserta(var,VIntro,venv)
+				val {exp = expbody, ty = tbody} = transExp venv' tenv body
+				val _ = if tbody = TUnit then ()
+						else error("El tipo del cuerpo del for debe ser TUnit",nl)
+			in {exp=SCAF, ty=TUnit} end
 		| trexp(LetExp({decs, body}, _)) =
 			let
 				val (venv', tenv', _) = List.foldl (fn (d, (v, t, _)) => trdec(v, t) d) (venv, tenv, []) decs
@@ -200,20 +193,27 @@ fun transExp(venv, tenv) =
 			in
 				{exp=SCAF, ty=tybody}
 			end
-		| trexp(BreakExp nl) =
-			{exp=SCAF, ty=TUnit} (*COMPLETAR*)
-		| trexp(ArrayExp({typ, size, init}, nl)) =
-			{exp=SCAF, ty=TUnit} (*COMPLETAR*)
+		| trexp(BreakExp nl) = {exp=SCAF, ty=TUnit} (*COMPLETADO*)
+		| trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETADO*)
+			let val t = tabBusca tenv typ
+				val t' = case t of
+					TArray (u,_) => u
+					| _ => error("El tipo ("^typ^") no es un array",nl)
+				val {exp=expsize, ty=tysize} = trexp size
+				val _ = if tysize = TInt then ()
+						else error("El tamaño del array debe ser un entero",nl)
+				val {exp=expinit, ty=tyinit} = trexp init
+				val _ = if tiposIguales tyinit t' then ()
+						else error("El tipo del valor inicial no coincide con el tipo del array",nl)
+			in {exp=SCAF, ty=t} end
 		and trvar(SimpleVar s, nl) =(*COMPLETADO*)
-            let
-                val tvar = 
-                    case tabBusca(s,venv) of
-                        SOME (Var{ty}) => ty
-                        | SOME VIntro => TInt
-                        | _ => error("Variable ("^s^") no definida",nl)
-            in
-                {exp=SCAF, ty=tvar}
-            end
+			let
+				val tvar = 
+					case tabBusca(s,venv) of
+						SOME (Var{ty}) => ty
+						| SOME VIntro => TInt
+						| _ => error("Variable ("^s^") no definida",nl)
+			in {exp=SCAF, ty=tvar} end
 		| trvar(FieldVar(v, s), nl) =
 			{exp=SCAF, ty=TUnit} (*COMPLETAR*)
 		| trvar(SubscriptVar(v, e), nl) =
