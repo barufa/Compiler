@@ -252,14 +252,20 @@ fun transExp(venv, tenv) =
 			let
 				val {exp=expv,ty=tyv} = trvar (v,nl)
 				val t = case tyv of
-							TArray (ref t',_) => t'
-							| _ => error("La variable no es de tipo TArray",nl)
+						TArray (ref t',_) => t'
+						| _ => error("La variable no es de tipo TArray",nl)
 				val {exp=expe,ty=tye} = trexp e
 				val _ = if tye = TInt then ()
 						else error("El indice del array debe ser un entero",nl)
 			in {exp=SCAF, ty=t} end
 		and trdec (venv, tenv) (VarDec ({name,escape,typ=NONE,init},pos)) = 
-			(venv, tenv, []) (*COMPLETAR*)
+			let 
+				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
+				val _ = case tyinit of
+							TUnit => error ("No se puede inferir el tipo de la variable "^name,pos)
+							| _   => ()
+				(*Como inserto cosas en la tabla???*)
+			in (venv, tenv, []) end
 		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) =
 			(venv, tenv, []) (*COMPLETAR*)
 		| trdec (venv,tenv) (FunctionDec fs) =
