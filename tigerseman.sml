@@ -258,16 +258,26 @@ fun transExp(venv, tenv) =
 				val _ = if tye = TInt then ()
 						else error("El indice del array debe ser un entero",nl)
 			in {exp=SCAF, ty=t} end
-		and trdec (venv, tenv) (VarDec ({name,escape,typ=NONE,init},pos)) = 
+		and trdec (venv, tenv) (VarDec ({name,escape,typ=NONE,init},pos)) = (*COMPLETADO*)
 			let 
 				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
 				val _ = case tyinit of
-							TUnit => error ("No se puede inferir el tipo de la variable "^name,pos)
-							| _   => ()
-				(*Como inserto cosas en la tabla???*)
-			in (venv, tenv, []) end
-		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) =
-			(venv, tenv, []) (*COMPLETAR*)
+							TNil => error("Se debe explicitar el tipo cuando se declara la variable ("^name^") y se le quiere asignar el valor nil",pos)
+							| TUnit => error("No se puede declarar la variable ("^name^") y asignarle algo del tipo TUnit",pos)
+							| _ => ()
+				val venv' = tabInserta(name,Var {ty=tyinit},venv)
+			in (venv', tenv, []) end (*No se para que es la lista esa*)
+		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) = (*COMPLETADO*)
+			let
+				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
+				val _ = if tiposIguales tyinit TUnit then error("No se puede declarar la variable ("^name^") y asignarle algo del tipo TUnit",pos)
+						else ()
+				val t = case tabBusca(s,tenv) of
+							SOME s' => if tiposIguales s' tyinit then s'
+										else error("El tipo de la declaracion de la variable ("^name^") no coincide con el tipo del valor inicial asignado",pos)
+							| NONE => error("El tipo ("^s^") de la variable ("^name^") no esta definido",pos)
+				val venv' = tabInserta(name,Var {ty=t},venv)
+			in (venv', tenv, []) end (*No se para que es la lista esa*)
 		| trdec (venv,tenv) (FunctionDec fs) =
 			(venv, tenv, []) (*COMPLETAR*)
 		| trdec (venv,tenv) (TypeDec ts) =
