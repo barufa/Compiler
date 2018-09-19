@@ -263,9 +263,9 @@ fun transExp(venv, tenv) =
 				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
 				val _ = case tyinit of
 							TNil => error("Se debe explicitar el tipo cuando se declara la variable ("^name^") y se le quiere asignar el valor nil",pos)
-							| TUnit => error("No se puede declarar la variable ("^name^") y asignarle algo del tipo TUnit",pos)
+							| TUnit => error("No se puede declarar la variable ("^name^") y asignarle algo del tipo Unit",pos)
 							| _ => ()
-				val venv' = tabInserta(name,Var {ty=tyinit},venv)
+				val venv' = tabInserta(name,Var {ty=tyinit},venv)(*TabRInserta?*)
 			in (venv', tenv, []) end (*No se para que es la lista esa*)
 		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) = (*COMPLETADO*)
 			let
@@ -276,10 +276,20 @@ fun transExp(venv, tenv) =
 							SOME s' => if tiposIguales s' tyinit then s'
 										else error("El tipo de la declaracion de la variable ("^name^") no coincide con el tipo del valor inicial asignado",pos)
 							| NONE => error("El tipo ("^s^") de la variable ("^name^") no esta definido",pos)
-				val venv' = tabInserta(name,Var {ty=t},venv)
+				val venv' = tabInserta(name,Var {ty=t},venv)(*TabRInserta?*)
 			in (venv', tenv, []) end (*No se para que es la lista esa*)
 		| trdec (venv,tenv) (FunctionDec fs) =
-			(venv, tenv, []) (*COMPLETAR*)
+			let
+				(*fs = ({name: symbol, params: field list,result: symbol option, body: exp} * pos) list*)
+				(*fs = [({name:symbol, params:[field],result: symbol option,body:exp},pos)]*)
+				(*fs = [({name:symbol, params:[{name,scape,typ}],result: symbol option,body:exp},pos)]*)
+				(*Como tengo una lista de funciones tengo que:
+					-Chequear que no se repitan los nombres en el mismo batch
+					-Chequeo que los tipos de retorno existan (Tipos en el mismo batch?)
+					-Crear funcion a insertar en venv -> Func {level,label,[formals], result, extern}
+					-Checkear tipo de retorno de la funcion con el tipo del cuerpo de la funcion
+				Problema:Funciones mutuamente recursivas sin especificar el tipo*)
+			in (venv, tenv, []) end (*COMPLETAR*)
 		| trdec (venv,tenv) (TypeDec ts) =
 			(venv, tenv, []) (*COMPLETAR*)
 	in trexp end
