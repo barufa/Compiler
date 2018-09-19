@@ -313,10 +313,10 @@ fun transExp(venv, tenv) =
 												val _ = if tiposIguales tresult tbody then () else error("La funcion ("^fname^") no posee el mismo tipo que su cuerpo",pos)*)
 											in tresult end
 										val vresult = fresult result body
-									in (fname,Func {level=mainLevel,label=fname,formals=vformals,result=vresult,extern=false},ps,body) end) fs
-				val lf = List.map (fn (name,fnc,ps,body) => (name,fnc)) tf
+									in (fname,{level=mainLevel,label=fname,formals=vformals,result=vresult,extern=false},ps,body,pos) end) fs
+				val lf = List.map (fn (name,fnc,ps,body,pos) => (name,Func fnc)) tf
 				val venv' = tabInserList(venv,lf)
-				val _ = List.map (fn (name,Func {result,...},ps,body) => 
+				val _ = List.map (fn (name,{result,...},ps,body,pos) => 
 									let
 										val ps' = List.map (fn (name,tipo) => (name,Var {ty=tipo})) ps
 										val venv_intern = tabInserList(venv',ps')
@@ -326,7 +326,7 @@ fun transExp(venv, tenv) =
 			in (venv', tenv, []) end
 		| trdec (venv,tenv) (TypeDec ts) =
 			let
-				
+			
 			in (venv, tenv, []) end (*COMPLETAR*)
 	in trexp end
 fun transProg ex =
