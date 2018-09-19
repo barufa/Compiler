@@ -266,7 +266,7 @@ fun transExp(venv, tenv) =
 							| TUnit => error("No se puede declarar la variable ("^name^") y asignarle algo del tipo Unit",pos)
 							| _ => ()
 				val venv' = tabInserta(name,Var {ty=tyinit},venv)(*TabRInserta?*)
-			in (venv', tenv, []) end (*No se para que es la lista esa*)
+			in (venv', tenv, []) end (*Lista vacia para la inicializacion de variables(mas adelante)*)
 		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) = (*COMPLETADO*)
 			let
 				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
@@ -277,21 +277,57 @@ fun transExp(venv, tenv) =
 										else error("El tipo de la declaracion de la variable ("^name^") no coincide con el tipo del valor inicial asignado",pos)
 							| NONE => error("El tipo ("^s^") de la variable ("^name^") no esta definido",pos)
 				val venv' = tabInserta(name,Var {ty=t},venv)(*TabRInserta?*)
-			in (venv', tenv, []) end (*No se para que es la lista esa*)
-		| trdec (venv,tenv) (FunctionDec fs) =
+			in (venv', tenv, []) end
+		| trdec (venv,tenv) (FunctionDec fs) =(*COMPLETADO, ver mainLevel*)
 			let
-				(*fs = ({name: symbol, params: field list,result: symbol option, body: exp} * pos) list*)
-				(*fs = [({name:symbol, params:[field],result: symbol option,body:exp},pos)]*)
-				(*fs = [({name:symbol, params:[{name,scape,typ}],result: symbol option,body:exp},pos)]*)
-				(*Como tengo una lista de funciones tengo que:
-					-Chequear que no se repitan los nombres en el mismo batch
-					-Chequeo que los tipos de retorno existan (Tipos en el mismo batch?)
-					-Crear funcion a insertar en venv -> Func {level,label,[formals], result, extern}
-					-Checkear tipo de retorno de la funcion con el tipo del cuerpo de la funcion
-				Problema:Funciones mutuamente recursivas sin especificar el tipo*)
-			in (venv, tenv, []) end (*COMPLETAR*)
+				(*Chequear que no se repitan los nombres de las funciones en el mismo batch*)
+				val _ = List.foldl (fn (({name,...},pos),lb) =>
+										if List.exists (fn x => x=name) lb then error("La funcion ("^name^") ya esta definida en el mismo batch",pos) 
+										else name::lb) [] fs
+				(*Chequear que no se repitan los nombres de los argumentos en una misma funcion*)
+				val _ = List.map (fn ({name=fname,params,...},pos) =>
+										List.foldl (fn (({name=pname,...}),lb) => 
+														if List.exists (fn x => x=pname) lb then error("El parametro ("^pname^") esta repetido en la definicion de ("^fname^")",pos) 
+														else pname::lb) [] params) fs
+				(*Chequear los tipos existan y sean iguales entre result y body, luego creo la Fundec*)
+				val tf = List.map (fn ({name=fname,params,result,body},pos) =>
+									let	
+										fun checkpar ps = List.map (fn ({name=pname,typ,...}) =>
+															case typ of
+																NameTy s => (case tabBusca(s,tenv) of
+																				SOME t' => (pname,t')
+																				| _    =>  error("El tipo del parametro ("^pname^") de la funcion ("^fname^") no esta definido",pos))
+																| _ => error("Error interno relacionado al parser",pos)) ps
+										val ps = checkpar params										
+										val vformals = List.map (fn (name,tipo) => tipo) ps
+										fun fresult res bod =
+											let 
+												val tresult = case res of
+																SOME s => (case tabBusca(s,tenv) of
+																			SOME t' => t'
+																			| NONE  => error("El tipo ("^s^") no esta definido",pos))
+																| NONE => TUnit
+												(*val ps' = List.map (fn (name,tipo) => (name,Var {ty=tipo})) ps
+												val venv' = tabInserList(venv,ps')
+												val {exp,ty=tbody} = transExp (venv',tenv) bod
+												val _ = if tiposIguales tresult tbody then () else error("La funcion ("^fname^") no posee el mismo tipo que su cuerpo",pos)*)
+											in tresult end
+										val vresult = fresult result body
+									in (fname,Func {level=mainLevel,label=fname,formals=vformals,result=vresult,extern=false},ps,body) end) fs
+				val lf = List.map (fn (name,fnc,ps,body) => (name,fnc)) tf
+				val venv' = tabInserList(venv,lf)
+				val _ = List.map (fn (name,Func {result,...},ps,body) => 
+									let
+										val ps' = List.map (fn (name,tipo) => (name,Var {ty=tipo})) ps
+										val venv_intern = tabInserList(venv',ps')
+										val {exp,ty=tbody} = transExp (venv_intern,tenv) body
+										val _ = if tiposIguales result tbody then () else error("La funcion ("^name^") no posee el mismo tipo que su cuerpo",pos)
+									in () end) tf
+			in (venv', tenv, []) end
 		| trdec (venv,tenv) (TypeDec ts) =
-			(venv, tenv, []) (*COMPLETAR*)
+			let
+				
+			in (venv, tenv, []) end (*COMPLETAR*)
 	in trexp end
 fun transProg ex =
 	let	val main =
