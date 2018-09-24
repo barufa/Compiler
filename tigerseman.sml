@@ -334,6 +334,8 @@ fun transExp(venv, tenv) =
 				val _ = if #1 reps then error("El nombre de tipo ("^(#2 reps)^") esta repetido",#3 reps) else ()
 				val ts' = List.map (#1) ts (*Me quedo con todos los tipos, descartando sus posiciones*)
 				val tenv' = (tigertopsort.fijaTipos ts' tenv)(*Llama a fijarTipos, manejando las exepciones??????*)
+							 handle tigertopsort.Ciclo => error("Hay un ciclo en la declaracion de tipos", #2 (hd ts))
+							 | noExiste => error("Algun tipo es inexistente", #2 (hd ts))(*Como mejorar el error*)
 			in (venv, tenv, []) end 
 	in trexp end
 fun transProg ex =
