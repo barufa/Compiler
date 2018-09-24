@@ -324,10 +324,17 @@ fun transExp(venv, tenv) =
 										val _ = if tiposIguales result tbody then () else error("La funcion ("^name^") no posee el mismo tipo que su cuerpo",pos)
 									in () end) tf
 			in (venv', tenv, []) end
-		| trdec (venv,tenv) (TypeDec ts) =
+		| trdec (venv,tenv) (TypeDec ts) = (*COMPLETADO*)
 			let
-			
-			in (venv, tenv, []) end (*COMPLETAR*)
+				(*TypeDec of ({name: symbol, ty: ty} * pos) list*)
+				(*ts => [({name,ty},pos)] ty=> NameTy string|RecordTy [field]|ArrayTy string *)
+				fun buscarep [] = (false,"",0) (*Toma un nombre y se fija si aparece en el resto de la lista*)
+					| buscarep (({name=s,ty},pos)::t) = if List.exists (fn({name=x,...},p) => x=s) t then (true,s,pos) else buscarep t
+				val reps = buscarep ts (*Si los nombre estan repetido, tiro el error correspondiente*)
+				val _ = if #1 reps then error("El nombre de tipo ("^(#2 reps)^") esta repetido",#3 reps) else ()
+				val ts' = List.map (#1) ts (*Me quedo con todos los tipos, descartando sus posiciones*)
+				val tenv' = (tigertopsort.fijaTipos ts' tenv)(*Llama a fijarTipos, manejando las exepciones??????*)
+			in (venv, tenv, []) end 
 	in trexp end
 fun transProg ex =
 	let	val main =
@@ -337,3 +344,4 @@ fun transProg ex =
 		val _ = transExp(tab_vars, tab_tipos) ex (*main*)
 	in	print "bien!\n" end
 end
+
