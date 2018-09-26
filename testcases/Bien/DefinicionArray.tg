@@ -1,0 +1,3 @@
+let type A = array of int
+    var a:=A[10] of 0
+in a[3] end

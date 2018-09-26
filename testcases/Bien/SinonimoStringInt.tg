@@ -1,0 +1,3 @@
+let type string = int
+    var s:string:=5
+in s end

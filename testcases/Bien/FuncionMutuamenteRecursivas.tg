@@ -1,0 +1,6 @@
+let
+    var a:=0
+    var b:=5
+    function g(x:int,y:int):int = f(x,y)
+    function f(q:int,w:int):int = g(q,w)
+in f(a,b) end

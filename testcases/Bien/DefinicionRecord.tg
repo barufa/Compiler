@@ -1,0 +1,3 @@
+let type R = {i:int, j:string}
+    var r:R:= R{i=123, j="123"}
+in r.i end

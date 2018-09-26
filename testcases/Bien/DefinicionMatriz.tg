@@ -1,0 +1,4 @@
+let type M = array of A
+    type A = array of int
+    var M:=M[10] of A[10] of 1
+in M[3][3] end

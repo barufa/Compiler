@@ -1,0 +1,6 @@
+let var x := 1
+    type int = string
+    type A = B
+    type B = C
+    type C = int
+in x end

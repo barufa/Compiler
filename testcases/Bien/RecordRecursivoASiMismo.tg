@@ -1,0 +1,4 @@
+let type R1 = {i:int, next:R2}
+    type R2 = {j:string, next:R1}
+    var r:R1:= R1{i=10, next=R2{j="", next=nil}}
+in (r.next.next := r;r.next.next.next.next.i) end

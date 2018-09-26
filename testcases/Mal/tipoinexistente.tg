@@ -1,0 +1,5 @@
+let var x := "1"
+    type A = B
+    type B = C
+    type C = D
+in x end

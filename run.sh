@@ -3,12 +3,11 @@
 dir=$(pwd)
 
 #Compilando
-@rm tiger
-@make clean
-@make
-@mosmlc -c -liberal tigertopsort.sig && mosmlc -c -liberal tigertopsort.sml
-@make
-@make clean
+rm tiger
+make clean
+make depend
+make 
+make clean
 
 #Corriendo Casos
 clear

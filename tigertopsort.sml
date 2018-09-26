@@ -49,7 +49,7 @@ fun genPares lt =
 	let
 		val lrecs = buscaArrRecords lt
 		fun genP [] res = res
-		| genP ({name, ty=NameTy s'}::t) res = (print("NameTy "^s'^"\n"); genP t ((s', name)::res)   )
+		| genP ({name, ty=NameTy s'}::t) res = ((*print("NameTy "^s'^"\n");*) genP t ((s', name)::res)   )
 		| genP ({name, ty=ArrayTy s'}::t) res = genP t ((s', name)::res)
 		| genP ({name, ty=RecordTy lf}::t) res = genP t res
 	in	genP lt [] end
@@ -92,7 +92,7 @@ fun fijaNONE [] env = env
 	| SOME ras => (ar := ras; fijaNONE t env))
 | fijaNONE((name, TRecord(lf, u))::t) env =
 	let	fun busNONE(s, ar as (ref(TTipo t)), _) =
-			(ar := tabSaca(t, env) handle _ => raise noExiste)
+			(ar := tabSaca(t, env) handle _ => raise noExisteS t)
 		| busNONE _ = ()
 		val _ = List.app busNONE lf
 	in	fijaNONE t env end

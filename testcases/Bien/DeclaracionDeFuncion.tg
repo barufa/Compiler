@@ -1,0 +1,3 @@
+let type C = int
+    function f(i:C):int = i+1
+in f(15+3) end

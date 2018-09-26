@@ -1,0 +1,3 @@
+let type R = {}
+    var r:= nil
+in 0 end

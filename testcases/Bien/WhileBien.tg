@@ -1,0 +1,6 @@
+let var i:=0
+in while i<10 do (
+       print(chr(i));
+       if i>5 then break;
+       i:=i+1);0 
+end
