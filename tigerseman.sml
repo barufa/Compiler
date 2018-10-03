@@ -72,7 +72,7 @@ fun tiposIguales (TRecord _) TNil = true
 fun transExp(venv, tenv) =
 	let fun error(s, p) = raise Fail ("Error -- línea "^Int.toString(p)^": "^s^"\n")
 		fun trexp(VarExp v)      =           trvar(v)
-		| trexp(UnitExp _)       =           {exp=exp=unitExp(), ty=TUnit}
+		| trexp(UnitExp _)       =           {exp=unitExp(), ty=TUnit}
 		| trexp(NilExp _)        =           {exp=nilExp(), ty=TNil}
 		| trexp(IntExp(i, _))    =           {exp=intExp i, ty=TInt}
 		| trexp(StringExp(s, _)) =           {exp=stringExp(s), ty=TString}
@@ -84,6 +84,7 @@ fun transExp(venv, tenv) =
 						| SOME _      => error("El nombre ("^func^") esta definido como una variable",nl)
 						| _           => error("Funcion ("^func^") no definida",nl)
 				val tArgs = map (fn(a) => let val {exp, ty=tipoArg} = trexp(a) in tipoArg end) args
+				val eArgs = map (fn(a) => let val {exp=expArg, ty} = trexp(a) in expArg end) args
 				fun comparar ([],[])           = ()
 					| comparar ([],_)            = error("No hay suficientes argumentos para la funcion ("^func^")",nl)
 					| comparar (_,[])            = error("Hay demasiados argumentos para la funcion ("^func^")",nl)
@@ -91,7 +92,7 @@ fun transExp(venv, tenv) =
 																				 else error("Los tipos de los argumentos de la funcion no coinciden"^
 																										" con los tipos de los argumentos pasados",nl)
 				val _ = comparar(tArgs,formals)
-			in {exp=SCAF, ty=result} end
+			in {exp=callExp (func^"."^Int.toString(nl)^"."^tigertemp.newlabel(),extern,result <> TUnit,level,eArgs), ty=result} end
 		| trexp(OpExp({left, oper=EqOp, right}, nl)) =
 			let
 				val {exp=expl, ty=tyl} = trexp left
@@ -182,24 +183,25 @@ fun transExp(venv, tenv) =
 					val exprs = map (fn{exp, ty} => exp) lexti
 					val {exp, ty=tipo} = hd(rev lexti)
 			in	{ exp=seqExp (exprs), ty=tipo } end
-		| trexp(AssignExp({var=SimpleVar s, exp}, nl)) = (*COMPLETADO*)
+		| trexp(AssignExp({var=SimpleVar s, exp}, nl)) = (*COMPLETAR*)
 			let
-				val {ty=tys} = case tabBusca(s,venv) of
+				val {ty=tys,...} = case tabBusca(s,venv) of
 												SOME (Var a) => a
 												| SOME _ 		 => error("El nombre ("^s^") esta definido como una funcion",nl)
 												| _ 				 => error("Variable ("^s^") no definida",nl)
 				val {exp=expexp,ty=tyexp} = trexp exp
-				val _ = if tiposIguales tyexp tys then ()
+				val {exp=expvar,ty} = trvar (SimpleVar s,nl)
+				val _ = if tiposIguales tyexp tys then () 
 								else error("Intento de asignar un valor del tipo incorrecto a la variable ("^s^")",nl)
-			in {exp=SCAF, ty=TUnit} end 
-		| trexp(AssignExp({var=FieldVar (v,s), exp}, nl)) = (*COMPLETADO*)
+			in {exp=assignExp{var=expvar,exp=expexp}, ty=TUnit} end			
+		| trexp(AssignExp({var=FieldVar (v,s), exp}, nl)) = (*COMPLETAR*)
 			let
 				val {exp=expvar,ty=tyvar} = trvar (FieldVar (v,s),nl)
 				val {exp=expexp,ty=tyexp} = trexp exp
 				val _ = if tiposIguales tyvar tyexp then ()
 								else error("Intentando asignar al record un tipo distinto",nl)
 			in {exp=SCAF, ty=TUnit} end
-		| trexp(AssignExp({var=SubscriptVar (v,e), exp}, nl)) = (*COMPLETADO*)
+		| trexp(AssignExp({var=SubscriptVar (v,e), exp}, nl)) = (*COMPLETAR*)
 			let
 				val {exp=expvar,ty=tyvar} = trvar (SubscriptVar (v,e),nl)
 				val {exp=expexp,ty=tyexp} = trexp exp
@@ -233,13 +235,13 @@ fun transExp(venv, tenv) =
 				else if tipoReal (#ty ttest) <> TInt then error("Error de tipo en la condición", nl)
 				else error("El cuerpo de un while no puede devolver un valor", nl)
 			end
-		| trexp(ForExp({var, escape, lo, hi, body}, nl)) =(*COMPLETADO*)
+		| trexp(ForExp({var, escape, lo, hi, body}, nl)) =(*COMPLETAR*)
 			let
 				val {exp = explo, ty = tlo} = trexp lo
 				val {exp = exphi, ty = thi} = trexp hi
 				val _ = if tlo = TInt andalso thi=TInt then ()
 								else error("Los indices del for deben ser enteros",nl)
-				val venv' = tabRInserta(var,VIntro,venv)
+				val venv' = tabRInserta(var,VIntro{access=allocLocal (topLevel()) (!escape),level=getActualLev()},venv)
 				val {exp = expbody, ty = tbody} = transExp (venv',tenv) body
 				val _ = if tbody = TUnit then ()
 								else error("El tipo del cuerpo del for debe ser TUnit",nl)
@@ -252,8 +254,8 @@ fun transExp(venv, tenv) =
 				val (venv', tenv', expdecs) = List.foldl aux (venv, tenv, []) decs
 				val {exp=expbody,ty=tybody}=transExp (venv', tenv') body
 			in {exp=seqExp(expdecs@[expbody]), ty=tybody} end
-		| trexp(BreakExp nl) = {exp=SCAF, ty=TUnit} (*COMPLETADO*)
-		| trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETADO*)
+		| trexp(BreakExp nl) = {exp=SCAF, ty=TUnit} (*COMPLETAR*)
+		| trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETAR*)
 			let val t = case tabBusca(typ,tenv) of
 										SOME a => a
 										| NONE => error("El tipo ("^typ^") no esta definido",nl)
@@ -267,14 +269,14 @@ fun transExp(venv, tenv) =
 				val _ = if tiposIguales tyinit t' then ()
 								else error("El tipo del valor inicial no coincide con el tipo del array",nl)
 			in {exp=SCAF, ty=t} end
-		and trvar(SimpleVar s, nl) =(*COMPLETADO*)
+		and trvar(SimpleVar s, nl) =(*COMPLETAR*)
 			let
 				val tvar = case tabBusca(s,venv) of
-										SOME (Var{ty})	=> ty
-										| SOME VIntro 	=> TInt
-										| _ 						=> error("Variable ("^s^") no definida",nl)
+										SOME (Var{ty,...})	=> ty
+										| SOME (VIntro _)  	=> TInt
+										| _ 						    => error("Variable ("^s^") no definida",nl)
 			in {exp=SCAF, ty=tvar} end
-		| trvar(FieldVar(v, s), nl) = (*COMPLETADO*)
+		| trvar(FieldVar(v, s), nl) = (*COMPLETAR*)
 			let
 				val {exp=expv,ty=tyv} = trvar(v,nl)
 				val l = case tyv of
@@ -284,7 +286,7 @@ fun transExp(venv, tenv) =
 													SOME (_,ref tipo,_) => tipo
 													| NONE 							=> error("El record no posee un campo llamado ("^s^")",nl)
 			in {exp=SCAF, ty=tiporesult} end
-		| trvar(SubscriptVar(v, e), nl) = (*COMPLETADO*)
+		| trvar(SubscriptVar(v, e), nl) = (*COMPLETAR*)
 			let
 				val {exp=expv,ty=tyv} = trvar (v,nl)
 				val t = case tyv of
@@ -294,7 +296,7 @@ fun transExp(venv, tenv) =
 				val _ = if tye = TInt then ()
 								else error("El indice del array debe ser un entero",nl)
 			in {exp=SCAF, ty=t} end
-		and trdec (venv, tenv) (VarDec ({name,escape,typ=NONE,init},pos)) = (*COMPLETADO*)
+		and trdec (venv, tenv) (VarDec ({name,escape,typ=NONE,init},pos)) = (*COMPLETAR*)
 			let 
 				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
 				val _ = case tyinit of
@@ -302,9 +304,9 @@ fun transExp(venv, tenv) =
 																	 ") y se le quiere asignar el valor nil",pos)
 									| TUnit => error("No se puede declarar la variable ("^name^") y asignarle algo del tipo Unit",pos)
 									| _ 		=> ()
-				val venv' = tabInserta(name,Var {ty=tyinit},venv)(*TabRInserta?*)
+				val venv' = tabInserta(name,Var {ty=tyinit,access=allocLocal (topLevel()) (!escape),level=getActualLev()},venv)(*TabRInserta?*)
 			in (venv', tenv, []) end (*Lista vacia para la inicializacion de variables(mas adelante)*)
-		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) = (*COMPLETADO*)
+		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) = (*COMPLETAR*)
 			let
 				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
 				val _ = if tiposIguales tyinit TUnit then error("No se puede declarar la variable ("^name^
@@ -315,9 +317,9 @@ fun transExp(venv, tenv) =
 														 else error("El tipo de la declaracion de la variable ("^name^
 																				") no coincide con el tipo del valor inicial asignado",pos)
 									| NONE 	=> error("El tipo ("^s^") de la variable ("^name^") no esta definido",pos)
-				val venv' = tabInserta(name,Var {ty=t},venv)(*TabRInserta?*)
+				val venv' = tabInserta(name,Var {ty=t,access=allocLocal (topLevel()) (!escape),level=getActualLev()},venv)(*TabRInserta?*)
 			in (venv', tenv, []) end
-		| trdec (venv,tenv) (FunctionDec fs) =(*COMPLETADO, ver mainLevel*)
+		| trdec (venv,tenv) (FunctionDec fs) =(*COMPLETAR, ver mainLevel*)
 			let
 				(*Chequear que no se repitan los nombres de las funciones en el mismo batch*)
 				val _ = List.foldl (fn (({name,...},pos),lb) =>
@@ -333,15 +335,15 @@ fun transExp(venv, tenv) =
 				(*Chequear los tipos existan y sean iguales entre result y body, luego creo la Fundec*)
 				val tf = List.map (fn ({name=fname,params,result,body},pos) =>
 									let	
-										fun checkpar ps = List.map (fn ({name=pname,typ,...}) =>
+										fun checkpar ps = List.map (fn ({name=pname,typ,escape}) =>
 															case typ of
 																NameTy s => (case tabBusca(s,tenv) of
-																							SOME t' => (pname,t')
+																							SOME t' => (pname,t',escape)
 																							| _    	=>  error("El tipo del parametro ("^pname^") de la funcion ("
 																																^fname^") no esta definido",pos))
 																| _ 		 => error("Error interno relacionado al parser",pos)) ps
 										val ps = checkpar params										
-										val vformals = List.map (fn (name,tipo) => tipo) ps
+										val vformals = List.map (fn (name,tipo,escape) => tipo) ps
 										fun fresult res bod =
 											let 
 												val tresult = case res of
@@ -351,19 +353,19 @@ fun transExp(venv, tenv) =
 																				| NONE => TUnit
 											in tresult end
 										val vresult = fresult result body
-									in (fname,{level=mainLevel,label=fname,formals=vformals,result=vresult,extern=false},ps,body,pos) end) fs
+									in (fname,{level=topLevel(),label=fname,formals=vformals,result=vresult,extern=false},ps,body,pos) end) fs
 				val lf = List.map (fn (name,fnc,ps,body,pos) => (name,Func fnc)) tf
 				val venv' = tabInserList(venv,lf)
 				val _ = List.map (fn (name,{result,...},ps,body,pos) => 
 									let
-										val ps' = List.map (fn (name,tipo) => (name,Var {ty=tipo})) ps
+										val ps' = List.map (fn (name,tipo,escape) => (name,Var {ty=tipo,access=allocLocal (topLevel()) (!escape),level=getActualLev()})) ps
 										val venv_intern = tabInserList(venv',ps')
 										val {exp,ty=tbody} = transExp (venv_intern,tenv) body
 										val _ = if tiposIguales result tbody then () else error("La funcion ("^name^") no posee"^
 																																						" el mismo tipo que su cuerpo",pos)
 									in () end) tf
 			in (venv', tenv, []) end
-		| trdec (venv,tenv) (TypeDec ts) = (*COMPLETADO*)
+		| trdec (venv,tenv) (TypeDec ts) = (*COMPLETAR*)
 			let
 				(*TypeDec of ({name: symbol, ty: ty} * pos) list*)
 				(*ts => [({name,ty},pos)] ty=> NameTy string|RecordTy [field]|ArrayTy string *)
