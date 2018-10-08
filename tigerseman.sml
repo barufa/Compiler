@@ -183,7 +183,7 @@ fun transExp(venv, tenv) =
 					val exprs = map (fn{exp, ty} => exp) lexti
 					val {exp, ty=tipo} = hd(rev lexti)
 			in	{ exp=seqExp (exprs), ty=tipo } end
-		| trexp(AssignExp({var=SimpleVar s, exp}, nl)) = (*COMPLETAR*)
+		| trexp(AssignExp({var=SimpleVar s, exp}, nl)) = (*COMPLETADO*)
 			let
 				val {ty=tys,...} = case tabBusca(s,venv) of
 												SOME (Var a) => a
@@ -194,20 +194,20 @@ fun transExp(venv, tenv) =
 				val _ = if tiposIguales tyexp tys then () 
 								else error("Intento de asignar un valor del tipo incorrecto a la variable ("^s^")",nl)
 			in {exp=assignExp{var=expvar,exp=expexp}, ty=TUnit} end			
-		| trexp(AssignExp({var=FieldVar (v,s), exp}, nl)) = (*COMPLETAR*)
+		| trexp(AssignExp({var=FieldVar (v,s), exp}, nl)) = (*COMPLETADO*)
 			let
 				val {exp=expvar,ty=tyvar} = trvar (FieldVar (v,s),nl)
 				val {exp=expexp,ty=tyexp} = trexp exp
 				val _ = if tiposIguales tyvar tyexp then ()
 								else error("Intentando asignar al record un tipo distinto",nl)
-			in {exp=SCAF, ty=TUnit} end
-		| trexp(AssignExp({var=SubscriptVar (v,e), exp}, nl)) = (*COMPLETAR*)
+			in {exp=assignExp{var=expvar,exp=expexp}, ty=TUnit} end
+		| trexp(AssignExp({var=SubscriptVar (v,e), exp}, nl)) = (*COMPLETADO*)
 			let
 				val {exp=expvar,ty=tyvar} = trvar (SubscriptVar (v,e),nl)
 				val {exp=expexp,ty=tyexp} = trexp exp
 				val _ = if tiposIguales tyvar tyexp then ()
 								else error("Intentando asignar al arreglo un tipo distinto",nl)
-			in {exp=SCAF, ty=TUnit} end
+			in {exp=assignExp{var=expvar,exp=expexp}, ty=TUnit} end
 		| trexp(IfExp({test, then', else'=SOME else'}, nl)) =
 			let val {exp=testexp, ty=tytest} = trexp test
 			    val {exp=thenexp, ty=tythen} = trexp then'
@@ -245,7 +245,7 @@ fun transExp(venv, tenv) =
 				val {exp = expbody, ty = tbody} = transExp (venv',tenv) body
 				val _ = if tbody = TUnit then ()
 								else error("El tipo del cuerpo del for debe ser TUnit",nl)
-			in {exp=SCAF, ty=TUnit} end
+			in {exp=forExp{lo=explo, hi=exphi ,var=SCAF,body=expbody}, ty=TUnit} end
 		| trexp(LetExp({decs, body}, _)) =
 			let
 				fun aux (d, (v, t, exps1)) =
@@ -254,8 +254,8 @@ fun transExp(venv, tenv) =
 				val (venv', tenv', expdecs) = List.foldl aux (venv, tenv, []) decs
 				val {exp=expbody,ty=tybody}=transExp (venv', tenv') body
 			in {exp=seqExp(expdecs@[expbody]), ty=tybody} end
-		| trexp(BreakExp nl) = {exp=SCAF, ty=TUnit} (*COMPLETAR*)
-		| trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETAR*)
+		| trexp(BreakExp nl) = {exp=breakExp(), ty=TUnit} (*COMPLETADO*)
+		| trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETADO*)
 			let val t = case tabBusca(typ,tenv) of
 										SOME a => a
 										| NONE => error("El tipo ("^typ^") no esta definido",nl)
@@ -268,7 +268,7 @@ fun transExp(venv, tenv) =
 				val {exp=expinit, ty=tyinit} = trexp init
 				val _ = if tiposIguales tyinit t' then ()
 								else error("El tipo del valor inicial no coincide con el tipo del array",nl)
-			in {exp=SCAF, ty=t} end
+			in {exp=arrayExp{size=expsize, init=expinit}, ty=t} end
 		and trvar(SimpleVar s, nl) =(*COMPLETAR*)
 			let
 				val tvar = case tabBusca(s,venv) of
