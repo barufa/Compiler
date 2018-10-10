@@ -7,6 +7,7 @@ open tigerabs
 
 exception breakexc
 exception divCero
+exception OrphanBreak
 	
 type level = {parent:frame option , frame: frame, level: int}
 type access = tigerframe.access
@@ -99,7 +100,7 @@ in
 	fun topSalida() =
 		case tigerpila.topPila salidas of
 		SOME l => l
-		| NONE => raise Fail "break incorrecto!"			
+		| NONE => raise OrphanBreak			
 end
 
 val datosGlobs = ref ([]: frag list)
@@ -141,13 +142,20 @@ fun nilExp() = Ex (CONST 0)
 
 fun intExp i = Ex (CONST i)
 
-fun simpleVar(acc, nivel) =
-	SCAF (*COMPLETAR*)
+fun simpleVar(InFrame n, nivel) = (*COMPLETAR*)
+	let tmp = newtemp()
+			instr = [MOVE(TEMP tmp, MEM(BINOP(PLUS,,BINOP(MUL,CONST n,CONST wSz))))]
+	in  end
+| simpleVar(InReg tmp, nivel) = Ex(TEMP tmp)
 
 fun varDec(acc) = simpleVar(acc, getActualLev())
 
-fun fieldVar(var, field) = 
-	SCAF (*COMPLETAR*)
+fun fieldVar(var, field) = (*COMPLETADO*)
+	let val tmp = newtemp()
+			val var' = unEx var
+			val instr = [EXP(externalCall("_checknil", [var'])),
+									MOVE(TEMP tmp, MEM(BINOP(PLUS,var',BINOP(MUL,CONST field,CONST wSz))))]
+	in Ex(ESEQ(seq instr,TEMP tmp)) end
 
 fun subscriptVar(arr, ind) =
 let
@@ -163,8 +171,8 @@ in
 			BINOP(MUL, TEMP ri, CONST tigerframe.wSz)))))
 end
 
-fun recordExp l =
-	SCAF (*COMPLETAR*)
+fun recordExp l = (*COMPLETAR*)
+	SCAF
 
 fun arrayExp{size, init} =
 let
@@ -174,14 +182,15 @@ in
 	Ex (externalCall("allocArray", [s, i]))
 end
 
-fun callExp (name,external,isproc,lev:level,ls) = 
-	Ex (CONST 0) (*COMPLETAR*)
+fun callExp (name,external,isproc,lev:level,ls) = (*COMPLETAR*)
+	Ex (CONST 0)
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
 
-fun breakExp() = 
-	SCAF (*COMPLETAR*)
+fun breakExp() = (*COMPLETADO*)
+	let val l = topSalida()
+	in Nx(JUMP(NAME l,[l])) end
 
 fun seqExp ([]:exp list) = Nx (EXP(CONST 0))
 	| seqExp (exps:exp list) =
@@ -216,17 +225,17 @@ in
 		LABEL l3])
 end
 
-fun forExp {lo, hi, var, body} =
-	SCAF (*COMPLETAR*)
+fun forExp {lo, hi, var, body} = (*COMPLETAR*)
+	SCAF
 
-fun ifThenExp{test, then'} =
-	SCAF (*COMPLETAR*)
+fun ifThenExp{test, then'} = (*COMPLETAR*)
+	SCAF 
 
-fun ifThenElseExp {test,then',else'} =
-	SCAF (*COMPLETAR*)
+fun ifThenElseExp {test,then',else'} = (*COMPLETAR*)
+	SCAF
 
-fun ifThenElseExpUnit {test,then',else'} =
-	SCAF (*COMPLETAR*)
+fun ifThenElseExpUnit {test,then',else'} = (*COMPLETAR*)
+	SCAF 
 
 fun assignExp{var, exp} =
 let
@@ -236,14 +245,14 @@ in
 	Nx (MOVE(v,vl))
 end
 
-fun binOpIntExp {left, oper, right} = 
-	SCAF (*COMPLETAR*)
+fun binOpIntExp {left, oper, right} = (*COMPLETAR*)
+	SCAF
 
-fun binOpIntRelExp {left,oper,right} =
-	SCAF (*COMPLETAR*)
+fun binOpIntRelExp {left,oper,right} = (*COMPLETAR*)
+	SCAF
 
-fun binOpStrExp {left,oper,right} =
-	SCAF (*COMPLETAR*)
+fun binOpStrExp {left,oper,right} = (*COMPLETAR*)
+	SCAF
 
 
 end

@@ -2,6 +2,7 @@ signature tigertrans = sig
 
 exception breakexc
 exception divCero
+exception OrphanBreak
 
 type level
 type access
