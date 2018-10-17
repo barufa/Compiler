@@ -142,10 +142,14 @@ fun nilExp() = Ex (CONST 0)
 
 fun intExp i = Ex (CONST i)
 
-fun simpleVar(InFrame n, nivel) = (*COMPLETAR*)
-	let tmp = newtemp()
-			instr = [MOVE(TEMP tmp, MEM(BINOP(PLUS,,BINOP(MUL,CONST n,CONST wSz))))]
-	in  end
+fun simpleVar(InFrame offset, nivel) = (*COMPLETADO*)
+  (*x: nivel final, y: nivel actual*)
+	let fun staticLink 0 = TEMP fp
+			| staticLink n = (case n > 0 of
+													true => MEM(BINOP(PLUS,staticLink (n-1),CONST fpPrevLev))
+													| false => raise Fail "Error interno 0 - tigertrans.sml")
+			val instr = MEM(BINOP(PLUS,staticLink (getActualLev()-nivel),CONST offset))
+	in Ex(instr) end
 | simpleVar(InReg tmp, nivel) = Ex(TEMP tmp)
 
 fun varDec(acc) = simpleVar(acc, getActualLev())
@@ -225,17 +229,59 @@ in
 		LABEL l3])
 end
 
-fun forExp {lo, hi, var, body} = (*COMPLETAR*)
-	SCAF
+fun forExp {lo, hi, var, body} = (*COMPLETADO*)
+	let val var' = unEx var
+			val lo' = unEx lo
+			val hi' = unEx hi
+			val body' = unNx body
+			val (lsigue,lfin) = (newlabel(),newlabel())
+			val instr = [MOVE(var',lo'),
+									CJUMP(GE,var',hi',lfin,lsigue),
+									LABEL lsigue,
+									body',
+									MOVE(var',BINOP(PLUS,var',CONST 1)),
+									CJUMP(GE,var',hi',lfin,lsigue),
+									LABEL lfin]
+	in Nx(seq instr) end
 
-fun ifThenExp{test, then'} = (*COMPLETAR*)
-	SCAF 
+fun ifThenExp{test, then'} = (*COMPLETADO*)
+	let val test' = unCx test
+			val th' = unNx then'
+			val (ltrue,lfalse) = (newlabel(),newlabel())
+			val instr = [test'(ltrue,lfalse),
+									LABEL ltrue,
+									th',
+									LABEL lfalse]
+	in Nx(seq instr) end
 
-fun ifThenElseExp {test,then',else'} = (*COMPLETAR*)
-	SCAF
+fun ifThenElseExp {test,then',else'} = (*COMPLETADO*)
+	let val test' = unCx test
+			val th' = unEx then'
+			val el' = unEx else'
+			val tmp = newtemp()
+			val (ltrue,lfalse,lsigue) = (newlabel(),newlabel(),newlabel())
+			val instr = [test'(ltrue,lfalse),
+									LABEL ltrue,
+									MOVE(TEMP tmp,th'),
+									JUMP(NAME lsigue,[lsigue]),
+									LABEL lfalse,
+									MOVE(TEMP tmp,el'),
+									LABEL lsigue]
+	in Ex(ESEQ(seq instr,TEMP tmp)) end
 
-fun ifThenElseExpUnit {test,then',else'} = (*COMPLETAR*)
-	SCAF 
+fun ifThenElseExpUnit {test,then',else'} = (*COMPLETADO*)
+	let val test' = unCx test
+			val th' = unNx then'
+			val el' = unNx else'
+			val (ltrue,lfalse,lsigue) = (newlabel(),newlabel(),newlabel())
+			val instr = [test'(ltrue,lfalse),
+									LABEL ltrue,
+									th',
+									JUMP(NAME lsigue,[lsigue]),
+									LABEL lfalse,
+									el',
+									LABEL lsigue]
+	in Nx(seq instr) end
 
 fun assignExp{var, exp} =
 let
@@ -245,14 +291,23 @@ in
 	Nx (MOVE(v,vl))
 end
 
-fun binOpIntExp {left, oper, right} = (*COMPLETAR*)
-	SCAF
+fun binOpIntExp {left, oper=PlusOp, right} = Ex(BINOP(PLUS,unEx left,unEx right)) (*COMPLETADO*)
+	| binOpIntExp {left, oper=MinusOp, right} = Ex(BINOP(MINUS,unEx left,unEx right))
+	| binOpIntExp {left, oper=TimesOp, right} = Ex(BINOP(MUL,unEx left,unEx right))
+	| binOpIntExp {left, oper=DivideOp, right} = Ex(BINOP(DIV,unEx left,unEx right))
+	| binOpIntExp {left, oper, right} = raise Fail "Error interno 1 - tigertrans.sml"
 
-fun binOpIntRelExp {left,oper,right} = (*COMPLETAR*)
-	SCAF
+fun binOpIntRelExp {left,oper=LtOp,right} = SCAF(*COMPLETAR*)
+	| binOpIntRelExp {left,oper=LeOp,right} = SCAF
+	| binOpIntRelExp {left,oper=GtOp,right} = SCAF
+	| binOpIntRelExp {left,oper=GeOp,right} = SCAF
+	| binOpIntRelExp {left,oper,right} = raise Fail "Error interno 2 - tigertrans.sml"
 
-fun binOpStrExp {left,oper,right} = (*COMPLETAR*)
-	SCAF
+fun binOpStrExp {left,oper=LtOp,right} = SCAF (*COMPLETAR*)
+	| binOpStrExp {left,oper=LeOp,right} = SCAF
+	| binOpStrExp {left,oper=GtOp,right} = SCAF
+	| binOpStrExp {left,oper=GeOp,right} = SCAF
+	| binOpStrExp {left,oper,right} = raise Fail "Error interno 3 - tigertrans.sml"
 
 
 end
