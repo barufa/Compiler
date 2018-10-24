@@ -183,7 +183,7 @@ let
 	val s = unEx size
 	val i = unEx init
 in
-	Ex (externalCall("allocArray", [s, i]))
+	Ex (externalCall("_allocArray", [s, i]))
 end
 
 fun callExp (name,external,isproc,lev:level,ls) = (*COMPLETAR*)
@@ -297,17 +297,16 @@ fun binOpIntExp {left, oper=PlusOp, right} = Ex(BINOP(PLUS,unEx left,unEx right)
 	| binOpIntExp {left, oper=DivideOp, right} = Ex(BINOP(DIV,unEx left,unEx right))
 	| binOpIntExp {left, oper, right} = raise Fail "Error interno 1 - tigertrans.sml"
 
-fun binOpIntRelExp {left,oper=LtOp,right} = SCAF(*COMPLETAR*)
-	| binOpIntRelExp {left,oper=LeOp,right} = SCAF
-	| binOpIntRelExp {left,oper=GtOp,right} = SCAF
-	| binOpIntRelExp {left,oper=GeOp,right} = SCAF
+fun binOpIntRelExp {left,oper=LtOp,right} = Cx(fn (lt,lf) => CJUMP(LT,unEx left,unEx right,lt,lf)) (*COMPLETADO*)
+	| binOpIntRelExp {left,oper=LeOp,right} = Cx(fn (lt,lf) => CJUMP(LE,unEx left,unEx right,lt,lf))
+	| binOpIntRelExp {left,oper=GtOp,right} = Cx(fn (lt,lf) => CJUMP(GT,unEx left,unEx right,lt,lf))
+	| binOpIntRelExp {left,oper=GeOp,right} = Cx(fn (lt,lf) => CJUMP(GE,unEx left,unEx right,lt,lf))
 	| binOpIntRelExp {left,oper,right} = raise Fail "Error interno 2 - tigertrans.sml"
 
-fun binOpStrExp {left,oper=LtOp,right} = SCAF (*COMPLETAR*)
-	| binOpStrExp {left,oper=LeOp,right} = SCAF
-	| binOpStrExp {left,oper=GtOp,right} = SCAF
-	| binOpStrExp {left,oper=GeOp,right} = SCAF
+fun binOpStrExp {left,oper=LtOp,right} = Cx(fn (lt,lf) => CJUMP(LT,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf)) (*COMPLETADO*)
+	| binOpStrExp {left,oper=LeOp,right} = Cx(fn (lt,lf) => CJUMP(LE,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
+	| binOpStrExp {left,oper=GtOp,right} = Cx(fn (lt,lf) => CJUMP(GT,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
+	| binOpStrExp {left,oper=GeOp,right} = Cx(fn (lt,lf) => CJUMP(GE,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
 	| binOpStrExp {left,oper,right} = raise Fail "Error interno 3 - tigertrans.sml"
-
 
 end
