@@ -153,9 +153,8 @@ fun transExp(venv, tenv) =
 				| zip (x::xs) n = (x,n):: (zip xs (n+1))
 				(* Traducir cada expresión de fields *)
 				val tfields' = zip(map (fn (sy,ex) => (sy, trexp ex)) fields) 0
-				fun cmp1 (((sx,_),_),((sy,_),_)) = String.compare (sx,sy)
-				fun cmp2 ((_,nx),(_,ny)) = Int.compare (nx,ny)
-				val tfields = Listsort.sort cmp1 tfields'
+				fun cmp (((sx,_),_),((sy,_),_)) = String.compare (sx,sy)
+				val tfields = Listsort.sort cmp tfields'
 				(* Buscar el tipo *)
 				val (tyr, cs) = case tabBusca(typ, tenv) of
 													SOME t => (case tipoReal t of
@@ -170,7 +169,7 @@ fun transExp(venv, tenv) =
 						if s<>sy then error("Error de campo", nl)
 						else if tiposIguales ty t then (exp, n)::(verificar cs ds)
 							 else error("Error de tipo del campo "^s, nl)
-				val lf = Listsort.sort cmp2 (verificar cs tfields)
+				val lf = (verificar cs tfields)
 			in
 				{exp=recordExp lf, ty=tyr}
 			end

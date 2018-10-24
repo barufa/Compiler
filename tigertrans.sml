@@ -17,6 +17,7 @@ val fraglist = ref ([]: frag list)
 
 val actualLevel = ref ~1 (* _tigermain debe tener level = 0. *)
 fun getActualLev() = !actualLevel
+fun getlevel {parent, frame, level} = level
 
 val outermost: level = {parent=NONE,
 	frame=newFrame{name="_tigermain", formals=[]}, level=getActualLev()}
@@ -33,9 +34,6 @@ datatype exp =
 	Ex of tigertree.exp
 	| Nx of tigertree.stm
 	| Cx of label * label -> tigertree.stm
-	| scaf
-
-val SCAF = scaf
 
 fun seq [] = EXP (CONST 0)
 	| seq [s] = s
@@ -176,7 +174,11 @@ in
 end
 
 fun recordExp l = (*COMPLETAR*)
-	SCAF
+	let fun cmp ((_,nx,_),(_,ny,_)) = Int.compare (nx,ny)
+			val campos = map (fn (exp,n) => let val tmp = TEMP (newtemp()) in (MOVE(tmp,unEx exp),n,tmp) end) l
+			val camposreg = map (#3) campos
+			val campos = map (fn (e,_,_) => e) (Listsort.sort cmp campos)
+	in Ex(ESEQ(seq campos,externalCall("_allocRecord",camposreg))) end
 
 fun arrayExp{size, init} =
 let
@@ -186,8 +188,23 @@ in
 	Ex (externalCall("_allocArray", [s, i]))
 end
 
-fun callExp (name,external,isproc,lev:level,ls) = (*COMPLETAR*)
-	Ex (CONST 0)
+fun callExp (name,external,isproc,lev:level,args) = (*COMPLETAR*)
+	let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
+			val t = TEMP (newtemp())
+			val argtmp = map (#1) args'
+			val argins = map (#2) args'
+			val tmpsl = TEMP (newtemp())
+			val inssl = MOVE(tmpsl,
+									case Int.compare(getActualLev(),getlevel lev) of
+										LESS => TEMP fp
+										| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (2*wSz)))
+										| GREATER => 
+											let val tmp = TEMP (newtemp())
+													fun recorre 0 = []
+													|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
+											in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
+									)
+	in Ex(ESEQ(seq (argins@[inssl]@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end	
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
