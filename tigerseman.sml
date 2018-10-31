@@ -181,9 +181,10 @@ fun transExp(venv, tenv) =
 		| trexp(AssignExp({var=SimpleVar s, exp}, nl)) = (*COMPLETADO*)
 			let
 				val {ty=tys,...} = case tabBusca(s,venv) of
-												SOME (Var a) => a
-												| SOME _ 		 => error("El nombre ("^s^") esta definido como una funcion",nl)
-												| _ 				 => error("Variable ("^s^") no definida",nl)
+												SOME (Var a)      => a
+												| SOME (VIntro _) => error("No es posible asignar valores a ("^s^") ",nl)
+												| SOME _  		    => error("El nombre ("^s^") esta definido como una funcion",nl)
+												| _ 			 	      => error("Variable ("^s^") no definida",nl)
 				val {exp=expexp,ty=tyexp} = trexp exp
 				val {exp=expvar,ty} = trvar (SimpleVar s,nl)
 				val _ = if tiposIguales tyexp tys then () 
@@ -221,17 +222,16 @@ fun transExp(venv, tenv) =
 				else error("El then de un IF sin else debe tener tipo TUnit", nl)
 			end
 		| trexp(WhileExp({test, body}, nl)) =
-			let
+			let	
 				val ttest = trexp test
 				val _ = preWhileForExp()
-				val tbody = trexp body
-				val _ = postWhileForExp()
-			in
-				if tipoReal (#ty ttest) = TInt andalso #ty tbody = TUnit 
-				then {exp=whileExp {test=(#exp ttest), body=(#exp tbody), lev=topLevel()}, ty=TUnit}
-				else if tipoReal (#ty ttest) <> TInt then error("Error de tipo en la condición", nl)
-				else error("El cuerpo de un while no puede devolver un valor", nl)
-			end
+				val {exp = expbody, ty = tbody} = trexp body
+				val expwhile =  if tipoReal (#ty ttest) = TInt andalso tbody = TUnit 
+												then {exp=whileExp {test=(#exp ttest), body=expbody, lev=topLevel()}, ty=TUnit}
+												else if tipoReal (#ty ttest) <> TInt then error("Error de tipo en la condición", nl)
+												else error("El cuerpo de un while no puede devolver un valor", nl)			
+				val _ = postWhileForExp()			
+			in expwhile	end
 		| trexp(ForExp({var, escape, lo, hi, body}, nl)) =(*COMPLETADO*)
 			let
 				val {exp = explo, ty = tlo} = trexp lo
@@ -241,13 +241,14 @@ fun transExp(venv, tenv) =
 				val varAccess = allocLocal (topLevel()) (!escape)
 				val varLevel = getActualLev()
 				val venv' = tabRInserta(var,VIntro{access= varAccess,level= varLevel},venv)
+				val expvar = simpleVar (varAccess,varLevel)								
 				val _ = preWhileForExp()
 				val {exp = expbody, ty = tbody} = transExp (venv',tenv) body
+				val expfor = {exp=forExp{lo=explo, hi=exphi ,var=expvar,body=expbody}, ty=TUnit}				
 				val _ = postWhileForExp()
-				val expvar = simpleVar (varAccess,varLevel)
 				val _ = if tbody = TUnit then ()
 								else error("El tipo del cuerpo del for debe ser TUnit",nl)
-			in {exp=forExp{lo=explo, hi=exphi ,var=expvar,body=expbody}, ty=TUnit} end
+			in expfor end
 		| trexp(LetExp({decs, body}, _)) =
 			let
 				fun aux (d, (v, t, exps1)) =
@@ -258,7 +259,7 @@ fun transExp(venv, tenv) =
 			in {exp=seqExp(expdecs@[expbody]), ty=tybody} end
 		| trexp(BreakExp nl) = let 
 															val expbreak = breakExp()
-																						 handle tigertrans.OrphanBreak => error("Se encontro un break fuera de un ciclo (o le erramos feo con las etiquetas)",nl)
+																						 handle tigertrans.OrphanBreak => error("Se encontro un break fuera de un ciclo ",nl)
 													 in {exp=expbreak, ty=TUnit} end (*COMPLETADO*)
 		| trexp(ArrayExp({typ, size, init}, nl)) = (*COMPLETADO*)
 			let val t = case tabBusca(typ,tenv) of

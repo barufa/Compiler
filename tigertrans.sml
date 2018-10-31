@@ -95,10 +95,11 @@ local
 in
 	val pushSalida = tigerpila.pushPila salidas
 	fun popSalida() = tigerpila.popPila salidas
+	fun lenSalida() = tigerpila.lenPila salidas
 	fun topSalida() =
 		case tigerpila.topPila salidas of
-		SOME l => l
-		| NONE => raise OrphanBreak			
+			SOME l => l
+			| NONE => raise OrphanBreak			
 end
 
 val datosGlobs = ref ([]: frag list)
@@ -106,7 +107,7 @@ fun procEntryExit{level: level, body} =
 	let	val label = STRING(name(#frame level), "")
 		val body' = PROC{frame= #frame level, body=unNx body}
 		val final = STRING(";;-------", "")
-	in	datosGlobs:=(!datosGlobs@[label, body', final]) end
+	in	datosGlobs:=(!datosGlobs@[body']) end
 fun getResult() = !datosGlobs
 
 fun stringLen s =
@@ -173,7 +174,7 @@ in
 			BINOP(MUL, TEMP ri, CONST tigerframe.wSz)))))
 end
 
-fun recordExp l = (*COMPLETAR*)
+fun recordExp l = (*COMPLETADO*)
 	let fun cmp ((_,nx,_),(_,ny,_)) = Int.compare (nx,ny)
 			val campos = map (fn (exp,n) => let val tmp = TEMP (newtemp()) in (MOVE(tmp,unEx exp),n,tmp) end) l
 			val camposreg = map (#3) campos
@@ -188,7 +189,7 @@ in
 	Ex (externalCall("_allocArray", [s, i]))
 end
 
-fun callExp (name,external,isproc,lev:level,args) = (*COMPLETAR*)
+fun callExp (name,external,isproc,lev:level,args) = (*COMPLETADO*)
 	let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
 			val t = TEMP (newtemp())
 			val argtmp = map (#1) args'
@@ -251,7 +252,7 @@ fun forExp {lo, hi, var, body} = (*COMPLETADO*)
 			val lo' = unEx lo
 			val hi' = unEx hi
 			val body' = unNx body
-			val (lsigue,lfin) = (newlabel(),newlabel())
+			val (lsigue,lfin) = (newlabel(),topSalida())
 			val instr = [MOVE(var',lo'),
 									CJUMP(GE,var',hi',lfin,lsigue),
 									LABEL lsigue,
