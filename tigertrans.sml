@@ -125,6 +125,7 @@ fun stringExp(s: string) =
 fun preFunctionDec() =
 	(pushSalida(NONE);
 	actualLevel := !actualLevel+1)
+
 fun functionDec(e, l, proc) =
 	let	val body =
 				if proc then unNx e
@@ -132,6 +133,7 @@ fun functionDec(e, l, proc) =
 		val body' = procEntryExit1(#frame l, body)
 		val () = procEntryExit{body=Nx body', level=l}
 	in	Ex(CONST 0) end
+
 fun postFunctionDec() =
 	(popSalida(); actualLevel := !actualLevel-1)
 

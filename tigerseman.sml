@@ -370,9 +370,16 @@ fun transExp(venv, tenv) =
 													val ps' = List.map (fn (name,tipo,escape) => (name,Var {ty=tipo,access=allocLocal (topLevel()) (!escape),level=getActualLev()})) ps
 													val venv_intern = tabInserList(venv',ps')
 													val {exp=expbody,ty=tbody} = transExp (venv_intern,tenv) body
+													val boolformals = map (fn (_,_,	escape) => !escape) ps
+													val nlevel = newLevel ({parent=level,name=(tigertemp.newlabel()),formals=boolformals})
+													(**)
+													val _ = print ("Los argumentos de "^ name ^" estan en: ")
+													val _ = map (fn x => if x then print "True " else print "False ") boolformals
+													val _ = print "\n"
+													(**)
 													val _ = if tiposIguales result tbody then () else error("La funcion ("^name^") no posee"^
 																																						" el mismo tipo que su cuerpo",pos)
-												in functionDec (expbody,level,result=TUnit) end) tf
+												in functionDec (expbody,nlevel,result=TUnit) end) tf
 				val _ = postFunctionDec()
 			in (venv', tenv, explist) end
 		| trdec (venv,tenv) (TypeDec ts) = (*COMPLETADO*)

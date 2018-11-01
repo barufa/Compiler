@@ -58,7 +58,7 @@ fun newFrame{name, formals} = {
 }
 
 fun name(f: frame) = #name f
-fun formals({formals=f, ...}: frame) = map (fn x => false) f (* COMPLETAR *)
+fun formals({formals=f, ...}: frame) = map (fn x => InReg rv) f (* COMPLETAR *)
 fun allocLocal (f: frame) b =
 	case b of
 	  true =>

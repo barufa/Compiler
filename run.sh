@@ -5,7 +5,6 @@ dir=$(pwd)
 #Compilando
 rm tiger
 make clean
-make depend
 make 
 make clean
 
