@@ -92,7 +92,9 @@ fun transExp(venv, tenv) =
 																				 else error("Los tipos de los argumentos de la funcion no coinciden"^
 																										" con los tipos de los argumentos pasados",nl)
 				val _ = comparar(tArgs,formals)
-			in {exp=callExp (func^"."^Int.toString(nl)^"."^tigertemp.newlabel(),extern,result <> TUnit,level,eArgs), ty=result} end
+				(*Al llamar a la funcion de esta forma, no estamos rompiendo cosas?*)
+			(*in {exp=callExp (func^"."^Int.toString(nl)^"."^tigertemp.newlabel(),extern,result <> TUnit,level,eArgs), ty=result} end*)
+			in {exp=callExp (func,extern,result <> TUnit,level,eArgs), ty=result} end
 		| trexp(OpExp({left, oper=EqOp, right}, nl)) =
 			let
 				val {exp=expl, ty=tyl} = trexp left

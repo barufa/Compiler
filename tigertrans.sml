@@ -192,6 +192,7 @@ in
 end
 
 fun callExp (name,external,isproc,lev:level,args) = (*COMPLETADO*)
+	(*Cambiamos el nombre de la funcion en tigerseman, eso no me rompe todo?*)
 	let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
 			val t = TEMP (newtemp())
 			val argtmp = map (#1) args'
