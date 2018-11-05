@@ -83,8 +83,7 @@ fun transExp(venv, tenv) =
 						SOME (Func t) => t
 						| SOME _      => error("El nombre ("^func^") esta definido como una variable",nl)
 						| _           => error("Funcion ("^func^") no definida",nl)
-				val tArgs = map (fn(a) => let val {exp, ty=tipoArg} = trexp(a) in tipoArg end) args
-				val eArgs = map (fn(a) => let val {exp=expArg, ty} = trexp(a) in expArg end) args
+				val (tArgs,eArgs) = foldr (fn (a,(lt,le)) => let val {exp=expArg, ty=tipoArg} = trexp(a) in (tipoArg::lt,expArg::le) end) ([],[]) args
 				fun comparar ([],[])           = ()
 					| comparar ([],_)            = error("No hay suficientes argumentos para la funcion ("^func^")",nl)
 					| comparar (_,[])            = error("Hay demasiados argumentos para la funcion ("^func^")",nl)
@@ -92,8 +91,6 @@ fun transExp(venv, tenv) =
 																				 else error("Los tipos de los argumentos de la funcion no coinciden"^
 																										" con los tipos de los argumentos pasados",nl)
 				val _ = comparar(tArgs,formals)
-				(*Al llamar a la funcion de esta forma, no estamos rompiendo cosas?*)
-			(*in {exp=callExp (func^"."^Int.toString(nl)^"."^tigertemp.newlabel(),extern,result <> TUnit,level,eArgs), ty=result} end*)
 			in {exp=callExp (func,extern,result <> TUnit,level,eArgs), ty=result} end
 		| trexp(OpExp({left, oper=EqOp, right}, nl)) =
 			let
@@ -373,12 +370,9 @@ fun transExp(venv, tenv) =
 													val venv_intern = tabInserList(venv',ps')
 													val {exp=expbody,ty=tbody} = transExp (venv_intern,tenv) body
 													val boolformals = map (fn (_,_,	escape) => !escape) ps
-													val nlevel = newLevel ({parent=level,name=(tigertemp.newlabel()),formals=boolformals})
-													(**)
-													val _ = print ("Los argumentos de "^ name ^" estan en: ")
-													val _ = map (fn x => if x then print "True " else print "False ") boolformals
-													val _ = print "\n"
-													(**)
+													val acclist = List.map (fn (_,Var {access,...}) => access
+																										 | _ => error("Error interno ralacionado a accesslist",pos)) ps'
+													val nlevel = newLevel ({parent=level,name=(if name="_tigermain" then name else tigertemp.newlabel()),formals=boolformals,accesslist=acclist})
 													val _ = if tiposIguales result tbody then () else error("La funcion ("^name^") no posee"^
 																																						" el mismo tipo que su cuerpo",pos)
 												in functionDec (expbody,nlevel,result=TUnit) end) tf
@@ -398,16 +392,19 @@ fun transExp(venv, tenv) =
 							 					| noExisteS ti 						=> error("El tipo ("^ti^") es inexistente", #2 (hd ts))
 			in (venv, tenv', []) end 
 	in trexp end
+	
 fun transProg ex =
 	let	val main =
 				LetExp({decs=[FunctionDec[({name="_tigermain", params=[],
 								result=SOME ("int"), body=ex}, 0)]],
 						body=UnitExp 0}, 0)
-		(*val _ = transExp(tab_vars, tab_tipos) main*)
+			val _ = transExp(tab_vars, tab_tipos) main
+(*
 			val {exp,ty} = transExp(tab_vars, tab_tipos) ex (*main*)
 			val _ = case ty of
 								TInt => ()
 								| _  => raise Fail ("Error -- línea 0 : El programa no devuelve un entero\n")
-	in	print "bien!\n" end
+*)
+	in print "bien!\n" end
 end
 

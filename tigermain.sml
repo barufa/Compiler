@@ -28,10 +28,25 @@ fun main(args) =
 		val lexbuf = lexstream entrada
 		val expr = prog Tok lexbuf handle _ => errParsing lexbuf
 		val _ = findEscape(expr)
+		val _ = transProg(expr)		
 		val _ = if arbol then tigerpp.exprAst expr else ()
+		(*No necesario*)
+		val lfrag = tigertrans.getResult()
+		fun imprimir (tigerframe.PROC {body,frame}) = print ("PROC: "^(tigerframe.name frame)^"\n"^tigerit.tree body^"\n")
+		    |imprimir (tigerframe.STRING (l,s)) = print ("STRING: "^l^" "^s^"\n")
+		val _ = List.map imprimir lfrag
+		fun split (l::ls) t s =
+			(case l of
+			 tigerframe.PROC {body,frame} => split ls (t@[(tigercanon.linearize body,frame)]) s
+			| tigerframe.STRING x => split ls t (s@[x]))
+		    | split [] t s = (t,s)
+		val (treelist,stringlist) = split lfrag [] []
+		val _ = tigerinterp.inter false treelist stringlist
+		(****)
 	in
-		transProg(expr);
 		print "yes!!\n"
 	end	handle Fail s => print("Fail: "^s^"\n")
 
 val _ = main(CommandLine.arguments())
+
+

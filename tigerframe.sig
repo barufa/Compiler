@@ -23,7 +23,7 @@ val calldefs : tigertemp.temp list
 val callersaves : tigertemp.temp list
 val calleesaves : tigertemp.temp list
 
-val newFrame : {name: tigertemp.label, formals: bool list} -> frame
+val newFrame : {name: tigertemp.label, formals: bool list,accesslist: access list} -> frame
 val name : frame -> tigertemp.label
 val formals : frame -> access list
 val allocLocal : frame -> bool -> access

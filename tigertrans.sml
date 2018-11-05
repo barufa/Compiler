@@ -20,12 +20,13 @@ fun getActualLev() = !actualLevel
 fun getlevel {parent, frame, level} = level
 
 val outermost: level = {parent=NONE,
-	frame=newFrame{name="_tigermain", formals=[]}, level=getActualLev()}
-fun newLevel{parent={parent, frame, level}, name, formals} =
+	frame=newFrame{name="_tigermain", formals=[],accesslist=[]}, level=getActualLev()}
+fun newLevel{parent={parent, frame, level}, name, formals, accesslist} =
 	{
-	parent=SOME frame,
-	frame=newFrame{name=name, formals=formals},
-	level=level+1}
+		parent=SOME frame,
+		frame=newFrame{name=name, formals=formals,accesslist=accesslist},
+		level=level+1
+	}
 fun allocArg{parent, frame, level} b = tigerframe.allocArg frame b
 fun allocLocal{parent, frame, level} b = tigerframe.allocLocal frame b
 fun formals{parent, frame, level} = tigerframe.formals frame
@@ -116,11 +117,16 @@ fun stringLen s =
 		| aux(_::t) = 1+aux(t)
 	in	aux(explode s) end
 
-fun stringExp(s: string) =
+(*fun stringExp(s: string) =
 	let	val l = newlabel()
 		val len = ".long "^makestring(stringLen s)
 		val str = ".string \""^s^"\""
 		val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
+	in	Ex(NAME l) end*)
+
+fun stringExp(s: string) =
+	let	val l = newlabel()
+		val _ = datosGlobs:=(!datosGlobs @ [STRING(l,s)])
 	in	Ex(NAME l) end
 fun preFunctionDec() =
 	(pushSalida(NONE);
@@ -191,24 +197,24 @@ in
 	Ex (externalCall("_allocArray", [s, i]))
 end
 
-fun callExp (name,external,isproc,lev:level,args) = (*COMPLETADO*)
-	(*Cambiamos el nombre de la funcion en tigerseman, eso no me rompe todo?*)
+fun callExp (name,external,isproc,lev:level,args) = (*COMPLETAR*)
 	let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
 			val t = TEMP (newtemp())
-			val argtmp = map (#1) args'(*No deberian salir de aca la access list?,Por que todos a regitros?, Varialbes escapadas??*)
+			val argtmp = map (#1) args'
 			val argins = map (#2) args'
 			val tmpsl = TEMP (newtemp())
-			val inssl = MOVE(tmpsl,
-									case Int.compare(getActualLev(),getlevel lev) of
-										LESS => TEMP fp
-										| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (2*wSz)))
-										| GREATER => 
-											let val tmp = TEMP (newtemp())
-													fun recorre 0 = []
-													|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
-											in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
-									)
-	in Ex(ESEQ(seq (argins@[inssl]@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
+			val inssl = if not(external) then [MOVE(tmpsl,
+																		case Int.compare(getActualLev(),getlevel lev) of
+																			LESS => TEMP fp
+																			| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (2*wSz)))
+																			| GREATER => 
+																				let val tmp = TEMP (newtemp())
+																						fun recorre 0 = []
+																						|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
+																				in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
+																		)]
+									else [](*Si external es true => No calcular ni pasar static link*)
+	in Ex(ESEQ(seq (argins@inssl@[EXP (CALL (NAME name,if external then argtmp else tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))

@@ -212,6 +212,9 @@ struct
 		fun getstrFun(args) = 
 		let
 			val str = TextIO.inputLine TextIO.stdIn
+			val str = case str of
+									  SOME s => s
+									| NONE => ""
 		in
 			storeString str
 		end

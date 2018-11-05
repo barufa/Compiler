@@ -18,16 +18,17 @@
 structure tigerframe :> tigerframe = struct
 
 open tigertree
+datatype access = InFrame of int | InReg of tigertemp.label
 
 type frame = {
 	name: string,
 	formals: bool list,
 	locals: bool list,
-	actualLocal: int ref
+	actualLocal: int ref,
+	accesslist: access list
 }
 type register = string
 
-datatype access = InFrame of int | InReg of tigertemp.label
 datatype frag = PROC of {body: tigertree.stm, frame: frame}
 	| STRING of tigertemp.label * string
 
@@ -50,15 +51,16 @@ val localsGap = ~4 			(* bytes *)
 val specialregs = [rv, fp, sp]
 val argregs = []
 
-fun newFrame{name, formals} = {
+fun newFrame{name, formals,accesslist} = {
 	name=name,
 	formals=formals,
 	locals=[],
-	actualLocal=ref localsInicial
+	actualLocal=ref localsInicial,
+	accesslist = accesslist
 }
 
 fun name(f: frame) = #name f
-fun formals({formals=f, ...}: frame) = map (fn x => InReg rv) f (* COMPLETAR *)
+fun formals({accesslist=l, ...}: frame) = l (* COMPLETADO *)
 fun allocLocal (f: frame) b =
 	case b of
 	  true =>
