@@ -195,7 +195,7 @@ fun callExp (name,external,isproc,lev:level,args) = (*COMPLETADO*)
 	(*Cambiamos el nombre de la funcion en tigerseman, eso no me rompe todo?*)
 	let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
 			val t = TEMP (newtemp())
-			val argtmp = map (#1) args'
+			val argtmp = map (#1) args'(*No deberian salir de aca la access list?,Por que todos a regitros?, Varialbes escapadas??*)
 			val argins = map (#2) args'
 			val tmpsl = TEMP (newtemp())
 			val inssl = MOVE(tmpsl,
@@ -208,7 +208,7 @@ fun callExp (name,external,isproc,lev:level,args) = (*COMPLETADO*)
 													|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
 											in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
 									)
-	in Ex(ESEQ(seq (argins@[inssl]@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end	
+	in Ex(ESEQ(seq (argins@[inssl]@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
