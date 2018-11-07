@@ -310,8 +310,8 @@ fun transExp(venv, tenv) =
 									| TUnit => error("No se puede declarar la variable ("^name^") y asignarle algo del tipo Unit",pos)
 									| _ 		=> ()
 				val varAccess = allocLocal (topLevel()) (!escape)
-				val venv' = tabInserta(name,Var {ty=tyinit,access= varAccess,level=getActualLev()},venv)(*TabRInserta?*)
-			in (venv', tenv, [varDec varAccess]) end (*Lista vacia para la inicializacion de variables(mas adelante)*)
+				val venv' = tabInserta(name,Var {ty=tyinit,access= varAccess,level=getActualLev()},venv)
+			in (venv', tenv, [assignExp{var = varDec varAccess,exp=expinit}]) end
 		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) = (*COMPLETADO*)
 			let
 				val {exp=expinit,ty=tyinit} = transExp (venv,tenv) init
@@ -325,7 +325,7 @@ fun transExp(venv, tenv) =
 									| NONE 	=> error("El tipo ("^s^") de la variable ("^name^") no esta definido",pos)
 				val varAccess = allocLocal (topLevel()) (!escape)
 				val venv' = tabInserta(name,Var {ty=t,access= varAccess,level=getActualLev()},venv)(*TabRInserta?*)
-			in (venv', tenv, [varDec varAccess]) end
+			in (venv', tenv, [assignExp{var = varDec varAccess,exp=expinit}]) end
 		| trdec (venv,tenv) (FunctionDec fs) =(*COMPLETADO*)
 			let
 				(*Chequear que no se repitan los nombres de las funciones en el mismo batch*)
@@ -340,6 +340,7 @@ fun transExp(venv, tenv) =
 																																					 " la definicion de ("^fname^")",pos) 
 														else pname::lb) [] params) fs
 				(*Chequear los tipos existan y sean iguales entre result y body, luego creo la Fundec*)
+				val _ = preFunctionDec()
 				val tf = List.map (fn ({name=fname,params,result,body},pos) =>
 									let	
 										fun checkpar ps = List.map (fn ({name=pname,typ,escape}) =>
@@ -361,9 +362,9 @@ fun transExp(venv, tenv) =
 											in tresult end
 										val vresult = fresult result body
 									in (fname,{level=topLevel(),label=fname,formals=vformals,result=vresult,extern=false},ps,body,pos) end) fs
+				val lf = List.map (fn (name,{level,...},ps,body,pos) => print ("Defino "^name^" con nivel "^Int.toString(getlevel level)^"\n")) tf
 				val lf = List.map (fn (name,fnc,ps,body,pos) => (name,Func fnc)) tf
 				val venv' = tabInserList(venv,lf)
-				val _ = preFunctionDec()
 				val explist = List.map (fn (name,{result,level,...},ps,body,pos) => 
 												let
 													val ps' = List.map (fn (name,tipo,escape) => (name,Var {ty=tipo,access=allocLocal (topLevel()) (!escape),level=getActualLev()})) ps
@@ -372,7 +373,7 @@ fun transExp(venv, tenv) =
 													val boolformals = map (fn (_,_,	escape) => !escape) ps
 													val acclist = List.map (fn (_,Var {access,...}) => access
 																										 | _ => error("Error interno ralacionado a accesslist",pos)) ps'
-													val nlevel = newLevel ({parent=level,name=(if name="_tigermain" then name else tigertemp.newlabel()),formals=boolformals,accesslist=acclist})
+													val nlevel = newLevel ({parent=level,name=name,formals=boolformals,accesslist=acclist})
 													val _ = if tiposIguales result tbody then () else error("La funcion ("^name^") no posee"^
 																																						" el mismo tipo que su cuerpo",pos)
 												in functionDec (expbody,nlevel,result=TUnit) end) tf
@@ -381,7 +382,6 @@ fun transExp(venv, tenv) =
 		| trdec (venv,tenv) (TypeDec ts) = (*COMPLETADO*)
 			let
 				(*TypeDec of ({name: symbol, ty: ty} * pos) list*)
-				(*ts => [({name,ty},pos)] ty=> NameTy string|RecordTy [field]|ArrayTy string *)
 				fun buscarep [] 											= (false,"",0) (*Toma un nombre y se fija si aparece en el resto de la lista*)
 						| buscarep (({name=s,ty},pos)::t) = if List.exists (fn({name=x,...},p) => x=s) t then (true,s,pos) else buscarep t
 				val reps = buscarep ts (*Si los nombre estan repetido, tiro el error correspondiente*)

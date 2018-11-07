@@ -1,0 +1,7 @@
+Finalizar el programa:
+
+val out = TextIO.openOut("tiger.s")
+val _   = TextIO.output(out,"Codigo en assembler")
+val _   = TextIO.closeOut(out)
+Process.system("gcc tmp.s runtime.c")
+

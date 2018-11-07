@@ -117,19 +117,13 @@ fun stringLen s =
 		| aux(_::t) = 1+aux(t)
 	in	aux(explode s) end
 
-(*fun stringExp(s: string) =
-	let	val l = newlabel()
-		val len = ".long "^makestring(stringLen s)
-		val str = ".string \""^s^"\""
-		val _ = datosGlobs:=(!datosGlobs @ [STRING(l, len), STRING("", str)])
-	in	Ex(NAME l) end*)
-
 fun stringExp(s: string) =
 	let	val l = newlabel()
 		val _ = datosGlobs:=(!datosGlobs @ [STRING(l,s)])
 	in	Ex(NAME l) end
 fun preFunctionDec() =
 	(pushSalida(NONE);
+	print ("PreFdec"^Int.toString(!actualLevel+1)^"\n");
 	actualLevel := !actualLevel+1)
 
 fun functionDec(e, l, proc) =
@@ -141,7 +135,9 @@ fun functionDec(e, l, proc) =
 	in	Ex(CONST 0) end
 
 fun postFunctionDec() =
-	(popSalida(); actualLevel := !actualLevel-1)
+	(popSalida();
+	print ("PostFdec"^Int.toString(!actualLevel-1)^"\n");	
+	actualLevel := !actualLevel-1)
 
 fun unitExp() = Ex (CONST 0)
 
@@ -150,8 +146,7 @@ fun nilExp() = Ex (CONST 0)
 fun intExp i = Ex (CONST i)
 
 fun simpleVar(InFrame offset, nivel) = (*COMPLETADO*)
-  (*x: nivel final, y: nivel actual*)
-	let fun staticLink 0 = TEMP fp
+  let fun staticLink 0 = TEMP fp
 			| staticLink n = (case n > 0 of
 													true => MEM(BINOP(PLUS,staticLink (n-1),CONST fpPrevLev))
 													| false => raise Fail "Error interno 0 - tigertrans.sml")
@@ -203,6 +198,7 @@ fun callExp (name,false,isproc,lev:level,args) = (*COMPLETAR*)
 				val argtmp = map (#1) args'
 				val argins = map (#2) args'
 				val tmpsl = TEMP (newtemp())
+				val _ = print (name^"_"^Int.toString(getlevel lev)^": Llamado desde "^Int.toString(getActualLev())^"\n")
 				val inssl = [MOVE(tmpsl,
 													case Int.compare(getActualLev(),getlevel lev) of
 														LESS => TEMP fp

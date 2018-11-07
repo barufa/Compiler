@@ -1,4 +1,4 @@
 (for i := 1 to 10 do 
-	(print(chr(i));
+	(print("0");
 	break)
 ;0)

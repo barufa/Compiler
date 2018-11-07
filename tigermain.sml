@@ -34,14 +34,18 @@ fun main(args) =
 		val lfrag = tigertrans.getResult()
 		fun imprimir (tigerframe.PROC {body,frame}) = print ("PROC: "^(tigerframe.name frame)^"\n"^tigerit.tree body^"\n")
 		    |imprimir (tigerframe.STRING (l,s)) = print ("STRING: "^l^" "^s^"\n")
-		val _ = List.map imprimir lfrag
+		(*val _ = List.map imprimir lfrag*)
 		fun split (l::ls) t s =
 			(case l of
 			 tigerframe.PROC {body,frame} => split ls (t@[(tigercanon.linearize body,frame)]) s
-			| tigerframe.STRING x => split ls t (s@[x]))
+			 | tigerframe.STRING x => split ls t (s@[x]))
 		    | split [] t s = (t,s)
-		val (treelist,stringlist) = split lfrag [] []
-		val _ = tigerinterp.inter false treelist stringlist
+		val (proclist,stringlist) = split lfrag [] []
+		val _ = List.map (fn (l,s) => print ("STRING: "^l^" \""^s^"\"\n")) stringlist
+		val _ = List.map (fn (b,f) => let val _ =print ("PROC: "^(tigerframe.name f)^"\n")
+																			val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
+																	in 0 end) proclist
+		val _ = tigerinterp.inter false proclist stringlist
 		(****)
 	in
 		print "yes!!\n"

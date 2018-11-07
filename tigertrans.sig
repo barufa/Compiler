@@ -14,6 +14,8 @@ val formals : level -> access list
 val getActualLev : unit -> int
 val allocArg : level -> bool -> access
 val allocLocal : level -> bool -> access
+(*val ('a, 'b, 'c) getlevel : {frame : 'a, level : 'b, parent : 'c} -> 'b*)
+val getlevel: level -> int
 
 type exp 
 val procEntryExit : {level: level, body: exp} -> unit
