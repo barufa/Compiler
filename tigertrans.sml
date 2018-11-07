@@ -197,24 +197,30 @@ in
 	Ex (externalCall("_allocArray", [s, i]))
 end
 
-fun callExp (name,external,isproc,lev:level,args) = (*COMPLETAR*)
-	let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
-			val t = TEMP (newtemp())
-			val argtmp = map (#1) args'
-			val argins = map (#2) args'
-			val tmpsl = TEMP (newtemp())
-			val inssl = if not(external) then [MOVE(tmpsl,
-																		case Int.compare(getActualLev(),getlevel lev) of
-																			LESS => TEMP fp
-																			| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (2*wSz)))
-																			| GREATER => 
-																				let val tmp = TEMP (newtemp())
-																						fun recorre 0 = []
-																						|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
-																				in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
-																		)]
-									else [](*Si external es true => No calcular ni pasar static link*)
-	in Ex(ESEQ(seq (argins@inssl@[EXP (CALL (NAME name,if external then argtmp else tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
+fun callExp (name,false,isproc,lev:level,args) = (*COMPLETAR*)
+		let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
+				val t = TEMP (newtemp())
+				val argtmp = map (#1) args'
+				val argins = map (#2) args'
+				val tmpsl = TEMP (newtemp())
+				val inssl = [MOVE(tmpsl,
+													case Int.compare(getActualLev(),getlevel lev) of
+														LESS => TEMP fp
+														| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (2*wSz)))
+														| GREATER => 
+															let val tmp = TEMP (newtemp())
+																	fun recorre 0 = []
+																	|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
+															in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
+											)]
+		in Ex(ESEQ(seq (argins@inssl@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
+	| callExp (name,true,isproc,lev:level,args) =
+		let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
+				val t = TEMP (newtemp())
+				val argtmp = map (#1) args'
+				val argins = map (#2) args'
+				val tmpsl = TEMP (newtemp())
+		in Ex(ESEQ(seq (argins@[EXP (CALL (NAME name,argtmp)),MOVE (t,TEMP rv)]),t)) end
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
