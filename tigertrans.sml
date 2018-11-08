@@ -20,16 +20,18 @@ fun getActualLev() = !actualLevel
 fun getlevel {parent, frame, level} = level
 
 val outermost: level = {parent=NONE,
-	frame=newFrame{name="_tigermain", formals=[],accesslist=[]}, level=getActualLev()}
-fun newLevel{parent={parent, frame, level}, name, formals, accesslist} =
+	frame=newFrame{name="_tigermain", formals=[]}, level=getActualLev()}
+fun newLevel{parent={parent, frame, level}, name, formals} =
 	{
 		parent=SOME frame,
-		frame=newFrame{name=name, formals=formals,accesslist=accesslist},
+		frame=newFrame{name=name, formals=formals},
 		level=level+1
 	}
 fun allocArg{parent, frame, level} b = tigerframe.allocArg frame b
 fun allocLocal{parent, frame, level} b = tigerframe.allocLocal frame b
 fun formals{parent, frame, level} = tigerframe.formals frame
+fun acclist({parent,frame,level},acc) = tigerframe.acclist (frame,acc)
+fun frame{parent, frame, level} = frame
 
 datatype exp =
 	Ex of tigertree.exp

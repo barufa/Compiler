@@ -1,7 +1,7 @@
 # Unix makefile for tigermain example
 
 HOME=$(shell pwd)
-MOSMLHOME=${HOME}/mosml
+MOSMLHOME=${HOME}/../mosml
 MOSMLTOOLS=camlrunm $(MOSMLHOME)/tools
 MOSMLLEX=mosmllex
 MOSMLYACC=mosmlyac -v
@@ -66,18 +66,21 @@ depend: tigerabs.sml tigergrm.sml tigerlex.sml tigermain.sml \
 
 ### DO NOT DELETE THIS LINE
 tigertopsort.ui: tigertab.ui tigertips.uo tigerabs.uo 
-tigermain.uo: tigerseman.ui tigerescap.ui tigergrm.ui tigerlex.uo \
+tigermain.uo: tigerseman.ui tigerescap.ui tigergrm.ui tigerframe.ui \
+    tigerit.uo tigercanon.ui tigerinterp.uo tigerlex.uo tigertrans.ui \
     tigerpp.uo 
 tigercanon.uo: tigercanon.ui tigertree.uo tigertab.ui tigertemp.ui 
+tigersimpleregalloc.uo: tigersimpleregalloc.ui tigerassem.uo 
 tigermuestratipos.ui: tigertips.uo 
 tigertree.uo: tigertemp.ui 
+tigersimpleregalloc.ui: tigerframe.ui tigerassem.uo 
 tigersres.uo: tigertab.ui tigertips.uo tigertemp.ui tigerabs.uo \
     tigertrans.ui 
 tigergrm.uo: tigergrm.ui tigernlin.uo tigerabs.uo 
 tigerseman.ui: tigerabs.uo 
 tigertemp.uo: tigertemp.ui 
 tigerit.uo: tigertree.uo tigertab.ui 
-tigercanon.ui: tigertree.uo 
+tigercanon.ui: tigertree.uo tigertemp.ui 
 tigertopsort.uo: tigertopsort.ui tigertab.ui tigertips.uo tigerabs.uo 
 tigerframe.uo: tigerframe.ui tigertree.uo tigertemp.ui 
 tigertrans.uo: tigertrans.ui tigertree.uo tigerpila.ui tigerframe.ui \
@@ -87,7 +90,7 @@ tigerlex.uo: tigergrm.ui tigernlin.uo
 tigertrans.ui: tigertree.uo tigerframe.ui tigertemp.ui tigerabs.uo 
 tigertab.uo: tigertab.ui 
 tigerseman.uo: tigerseman.ui tigersres.uo tigertab.ui tigerpila.ui \
-    tigertopsort.ui tigertemp.ui tigerabs.uo tigertrans.ui 
+    tigertopsort.ui tigerabs.uo tigertrans.ui 
 tigerpp.uo: tigerabs.uo 
 tigerinterp.uo: tigertree.uo tigertab.ui tigerframe.ui tigerit.uo \
     tigertemp.ui 

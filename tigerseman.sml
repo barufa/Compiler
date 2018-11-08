@@ -312,7 +312,6 @@ fun transExp(venv, tenv) =
 			in (venv', tenv, [assignExp{var = varDec varAccess,exp=expinit}]) end
 		| trdec (venv,tenv) (FunctionDec fs) =(*COMPLETADO*)
 			let
-				val _ = preFunctionDec()				
 				(*Chequear que no se repitan los nombres de las funciones en el mismo batch*)
 				val _ = List.foldl (fn (({name,...},pos),lb) =>
 										if List.exists (fn x => x=name) lb then error("La funcion ("^name^") ya esta"^
@@ -356,7 +355,7 @@ fun transExp(venv, tenv) =
 													val boolformals = map (fn (_,_,	escape) => !escape) ps
 													val acclist = List.map (fn (_,Var {access,...}) => access
 																										 | _ => error("Error interno ralacionado a accesslist",pos)) ps'
-													val nlevel = newLevel ({parent=level,name=name,formals=boolformals,accesslist=acclist})
+													val nlevel = newLevel ({parent=level,name=name,formals=boolformals})
 													val _ = pushLevel(nlevel)
 													val venv_intern = tabInserList(venv',ps')
 													val {exp=expbody,ty=tbody} = transExp (venv_intern,tenv) body
@@ -366,39 +365,61 @@ fun transExp(venv, tenv) =
 												in functionDec (expbody,nlevel,result=TUnit) end) tf
 				*)
 					(*Veo que los tipo existan*)
-					val typfuns = List.map (fn ({name=fname,params,result,body},pos) =>(*Veo los tipos de los argumentos y el resultado*)
-									let	
-										fun checkpar par = List.map (fn ({name=pname,typ,escape}) =>
-															case typ of
-																NameTy s => (case tabBusca(s,tenv) of
-																							SOME t' => (pname,t',escape)
-																							| _    	=>  error("El tipo del parametro ("^pname^") de la funcion ("
-																																^fname^") no esta definido",pos))
-																| _ 		 => error("Error interno relacionado al parser",pos)) par
-										val ps = checkpar params(*Chequeo que los tipos de los parametros esten bien*)
-										(*val tformals = List.map (fn (name,tipo,escape) => tipo) ps*)
-										val tresult = case result of(*Chequeo el tipo del resultado*)
-																		SOME s => (case tabBuscas(s,tenv) of
-																									SOME t' => t'
-																									|NONE   => error("El tipo ("^s^") no esta definido",pos))
-																		|NONE  => TUnit
-									in (fname,params,body,tresult,ps,pos) end) fs
-									(*in (fname,{level=topLevel(),label=fname,formals=tformals,result=tresult,extern=false},ps,body,pos) end) fs*)
-				val listfuns = List.map (fn (fname,params,body,tresult,ps,pos) => 
+				val typfuns = List.map (fn ({name=fname,params,result,body},pos) =>(*Veo los tipos de los argumentos y el resultado*)
+					let	
+						fun checkpar par = List.map (fn ({name=pname,typ,escape}) =>
+							case typ of
+								NameTy s => (case tabBusca(s,tenv) of
+															SOME t' => (pname,t',escape)
+															| _    	=>  error("El tipo del parametro ("^pname^") de la funcion ("
+																								^fname^") no esta definido",pos))
+								| _ 		 => error("Error interno relacionado al parser",pos)) par
+						val ps = checkpar params(*Chequeo que los tipos de los parametros esten bien*)
+						val tresult = case result of(*Chequeo el tipo del resultado*)
+														SOME s => (case tabBusca(s,tenv) of
+																					SOME t' => t'
+																					| NONE  => error("El tipo ("^s^") no esta definido",pos))
+														| NONE => TUnit
+					in (fname,params,body,tresult,ps,pos) end) fs
+				val listfuns = List.map (fn (fname,params,body,tresult,ps,pos) => (*Preparo las funciones para agregarlas al entorno (Creando su nuevo level)*)
 																	let 
-																			val boolformals = List.map #3 ps
-																			val acclist = List.map (allocLocal (topLevel()) (!escape)) ps																	
+																			val boolformals = List.map (fn (_,_,ref b) => b) ps																
 																			val fnc = {
 																									label = fname,
-																									formals = (List.map #2 ps),
+																									formals = List.map (#2) ps,
 																									result = tresult,
 																									extern = false,
-																									level = newLevel({parent=topLevel(),name=fname,formals=boolformals,accesslist=acclist})
+																									level = newLevel({parent=topLevel(),name=fname,formals=boolformals})
 																								}
 																	in (fname,Func fnc) end) typfuns
-				val explist = List.map () typfuns
-				val _ = postFunctionDec()
-			in (venv', tenv, explist) end
+				(*Agrego las funciones al entorno*)
+				val venv' = tabInserList(venv,listfuns)
+				(*Veo que los tipos de result y body sean iguales*)
+				val _ = List.map (fn (fname,params,body,tresult,ps,pos) =>
+														let val _ = preFunctionDec()
+																val (l,res) = case tabBusca(fname,venv') of
+																								SOME (Func {level,result,...})  => (level,result)
+																								| SOME _                				=> error("No deberia pasar 1",pos)
+																								| NONE                  				=> error("No deberia pasar 2",pos)
+																val _ = pushLevel l
+																val arglist = List.map (fn {name,escape,typ} => 
+																													let val t = case typ of
+																																				NameTy s => (case tabBusca(s,tenv) of
+																																											SOME t' => t'
+																																											| _   	=>  error("",pos))
+																																				| _ 		 => error("No deberia pasar 5",pos)
+																													in (name,Var {ty=t,access=acclist(l,allocLocal (topLevel()) (!escape)),level=getActualLev()}) end) params
+																val venv_intern = tabInserList(venv',arglist)
+																val {exp=expbody,ty=tbody} = transExp (venv_intern,tenv) body
+																val _ = if tiposIguales res tbody then () else error("La funcion ("^fname^") no posee"^
+																												 														 " el mismo tipo que su cuerpo",pos)
+
+																val _ = popLevel()
+																val _ = postFunctionDec()
+														in functionDec(expbody,l,res = TUnit) end
+													) typfuns
+
+			in (venv', tenv, []) end
 		| trdec (venv,tenv) (TypeDec ts) = (*COMPLETADO*)
 			let
 				(*TypeDec of ({name: symbol, ty: ty} * pos) list*)

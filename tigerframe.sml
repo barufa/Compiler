@@ -25,7 +25,7 @@ type frame = {
 	formals: bool list,
 	locals: bool list,
 	actualLocal: int ref,
-	accesslist: access list
+	accesslist: access list ref
 }
 type register = string
 
@@ -51,16 +51,6 @@ val localsGap = ~4 			(* bytes *)
 val specialregs = [rv, fp, sp]
 val argregs = []
 
-fun newFrame{name, formals,accesslist} = {
-	name=name,
-	formals=formals,
-	locals=[],
-	actualLocal=ref localsInicial,
-	accesslist = accesslist
-}
-
-fun name(f: frame) = #name f
-fun formals({accesslist=l, ...}: frame) = l (* COMPLETADO *)
 fun allocLocal (f: frame) b =
 	case b of
 	  true =>
@@ -71,6 +61,20 @@ fun allocLocal (f: frame) b =
 	| false => InReg(tigertemp.newtemp())
 val allocArg = allocLocal
 
+fun newFrame{name, formals} = 
+	let val f = {
+							name=name,
+							formals=formals,
+							locals=[],
+							actualLocal=ref localsInicial,
+							accesslist = ref ([]:access list)
+							}
+			(*val _ = !(#accesslist f) = List.map (fn x => allocLocal f x) formals*)
+	in f end
+
+fun name(f: frame) = #name f
+fun formals({accesslist=l, ...}: frame) = !l (* COMPLETADO *)
+fun acclist({accesslist=l, ...}: frame,acc: access) = let val _ = !l = !l@[acc] in acc end
 fun string(l, s) = l^tigertemp.makeString(s)^"\n"
 fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
 | exp(InReg l) e = TEMP l
