@@ -123,7 +123,7 @@ fun stringExp(s: string) =
 	in	Ex(NAME l) end
 fun preFunctionDec() =
 	(pushSalida(NONE);
-	print ("PreFdec"^Int.toString(!actualLevel+1)^"\n");
+	print ("PreFdec "^Int.toString(!actualLevel+1)^"\n");
 	actualLevel := !actualLevel+1)
 
 fun functionDec(e, l, proc) =
