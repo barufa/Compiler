@@ -1,3 +1,3 @@
-let function f(i:int):string = "hola"
-    var x := 15+3
+let function f(i:int):string = chr(i)
+    var x := 97
 in ( (print (f(x)) );0 ) end

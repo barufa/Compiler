@@ -1,0 +1,255 @@
+bien!
+LetExp{decs=[TypeDec([{name=A,ty=ArrayTy(int)}])
+             VarDec{name=len,escape=false,typ=NONE,init=10}
+             VarDec{name=numbers,escape=true,typ=NONE,
+              init=ArrayExp{test=A,size=10,init=65}}
+             FunctionDec([{name=fill,params=[],result=NONE
+             body=SeqExp([ForExp{var=i,escape=false,lo=0,hi=10,
+                          body=ForExp{var=j,escape=false,
+                               lo=VarExp(SimpleVar(i)),hi=10,
+                               body=AssignExp{
+                                     var=SubscriptVar(SimpleVar(numbers),
+                                          VarExp(SimpleVar(i))),
+                                     exp=OpExp{
+                                         left=VarExp(
+                                               SubscriptVar(SimpleVar(numbers),
+                                                VarExp(SimpleVar(i)))),
+                                          oper=PlusOp,right=1}}}}
+                  ForExp{var=i,escape=false,lo=0,hi=10,
+                  body=CallExp{func=print,
+                       args=[CallExp{func=chr,
+                             args=[VarExp(
+                                    SubscriptVar(SimpleVar(numbers),
+                                     VarExp(SimpleVar(i))))]}]}}])}])],
+ body=SeqExp([CallExp{func=fill,args=[]}CallExp{func=print,args=["Wacho
+"]}0])}
+STRING: L6 "Wacho
+"
+PROC: fill
+MOVE(
+ TEMP T1,
+ CONST 0)
+
+CJUMP(GE,
+ TEMP T1,
+ CONST 10,
+ L0,L3)
+
+LABEL L3
+
+MOVE(
+ TEMP T2,
+ TEMP T1)
+
+CJUMP(GE,
+ TEMP T2,
+ CONST 10,
+ L1,L2)
+
+LABEL L2
+
+MOVE(
+ TEMP T3,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     TEMP FP,
+     CONST 8)),
+   CONST ~4)))
+
+MOVE(
+ TEMP T4,
+ TEMP T1)
+
+EXP(
+ CALL(
+  NAME _checkIndexArray,
+   TEMP T3,
+   TEMP T4))
+
+MOVE(
+ TEMP T18,
+ BINOP(PLUS,
+  TEMP T3,
+  BINOP(MUL,
+   TEMP T4,
+   CONST 4)))
+
+MOVE(
+ TEMP T5,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     TEMP FP,
+     CONST 8)),
+   CONST ~4)))
+
+MOVE(
+ TEMP T6,
+ TEMP T1)
+
+EXP(
+ CALL(
+  NAME _checkIndexArray,
+   TEMP T5,
+   TEMP T6))
+
+MOVE(
+ MEM(
+  TEMP T18),
+ BINOP(PLUS,
+  MEM(
+   BINOP(PLUS,
+    TEMP T5,
+    BINOP(MUL,
+     TEMP T6,
+     CONST 4))),
+  CONST 1))
+
+MOVE(
+ TEMP T2,
+ BINOP(PLUS,
+  TEMP T2,
+  CONST 1))
+
+CJUMP(GE,
+ TEMP T2,
+ CONST 10,
+ L1,L2)
+
+LABEL L1
+
+MOVE(
+ TEMP T1,
+ BINOP(PLUS,
+  TEMP T1,
+  CONST 1))
+
+CJUMP(GE,
+ TEMP T1,
+ CONST 10,
+ L0,L3)
+
+LABEL L0
+
+MOVE(
+ TEMP T7,
+ CONST 0)
+
+CJUMP(GE,
+ TEMP T7,
+ CONST 10,
+ L4,L5)
+
+LABEL L5
+
+MOVE(
+ TEMP T8,
+ MEM(
+  BINOP(PLUS,
+   MEM(
+    BINOP(PLUS,
+     TEMP FP,
+     CONST 8)),
+   CONST ~4)))
+
+MOVE(
+ TEMP T9,
+ TEMP T7)
+
+EXP(
+ CALL(
+  NAME _checkIndexArray,
+   TEMP T8,
+   TEMP T9))
+
+MOVE(
+ TEMP T10,
+ MEM(
+  BINOP(PLUS,
+   TEMP T8,
+   BINOP(MUL,
+    TEMP T9,
+    CONST 4))))
+
+EXP(
+ CALL(
+  NAME chr,
+   TEMP T10))
+
+MOVE(
+ TEMP T12,
+ TEMP RV)
+
+MOVE(
+ TEMP T13,
+ TEMP T12)
+
+EXP(
+ CALL(
+  NAME print,
+   TEMP T13))
+
+MOVE(
+ TEMP T7,
+ BINOP(PLUS,
+  TEMP T7,
+  CONST 1))
+
+CJUMP(GE,
+ TEMP T7,
+ CONST 10,
+ L4,L5)
+
+LABEL L4
+
+PROC: _tigermain
+MOVE(
+ TEMP T0,
+ CONST 10)
+
+MOVE(
+ TEMP T20,
+ BINOP(PLUS,
+  TEMP FP,
+  CONST ~4))
+
+MOVE(
+ TEMP T19,
+ CALL(
+  NAME _initArray,
+   CONST 10,
+   CONST 65))
+
+MOVE(
+ MEM(
+  TEMP T20),
+ TEMP T19)
+
+MOVE(
+ TEMP T15,
+ TEMP FP)
+
+EXP(
+ CALL(
+  NAME fill,
+   TEMP T15))
+
+MOVE(
+ TEMP T16,
+ NAME L6)
+
+EXP(
+ CALL(
+  NAME print,
+   TEMP T16))
+
+MOVE(
+ TEMP RV,
+ CONST 0)
+
+Comienzo de ejecución...
+Fail: Índice fuera de rango
+

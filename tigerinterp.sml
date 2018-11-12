@@ -107,11 +107,11 @@ struct
 			mem
 		end
 		| initArray _ = raise Fail("No debería pasar (initArray)")
-
 		fun checkIndexArray(arr::idx::rest) =
 		let
 			val siz = loadMem (arr+1)
-			val _ = if (idx>=siz orelse idx<0) then raise Fail("Índice fuara de rango\n") else ()
+			(*val _ = print("Size: "^Int.toString(siz)^"\tIdx: "^Int.toString(idx)^"\n")*)
+			val _ = if (idx>=siz orelse idx<0) then raise Fail("Índice fuera de rango\n") else ()
 		in
 			0
 		end
@@ -315,7 +315,8 @@ struct
 			let
 				(* Encontrar la función*)
 				val ffrac = List.filter (fn (body, frame) => tigerframe.name(frame)=f) funfracs
-				val _ = if (List.length(ffrac)<>1) then raise Fail ("No se encuentra la función, o repetida: "^f^"\n") else ()
+				val _ = if (List.length(ffrac)=0) then raise Fail ("No se encuentra la función: "^f^"\n") else ()
+				val _ = if (List.length(ffrac)>1) then raise Fail ("La función esta repetida: "^f^"\n") else ()
 				val (body, frame) = List.hd(ffrac)
 				(* Mostrar qué se está haciendo, si showdebug *)
 				val _ = if showdebug then (print((tigerframe.name frame)^":\n");List.app (print o tigerit.tree) body; print("Argumentos: "); List.app (fn n => (print(Int.toString(n)); print("  "))) args; print("\n")) else ()

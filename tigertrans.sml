@@ -109,7 +109,6 @@ val datosGlobs = ref ([]: frag list)
 fun procEntryExit{level: level, body} =
 	let	val label = STRING(name(#frame level), "")
 		val body' = PROC{frame= #frame level, body=unNx body}
-		val final = STRING(";;-------", "")
 	in	datosGlobs:=(!datosGlobs@[body']) end
 fun getResult() = !datosGlobs
 
@@ -125,7 +124,6 @@ fun stringExp(s: string) =
 	in	Ex(NAME l) end
 fun preFunctionDec() =
 	(pushSalida(NONE);
-	print ("PreFdec "^Int.toString(!actualLevel+1)^"\n");
 	actualLevel := !actualLevel+1)
 
 fun functionDec(e, l, proc) =
@@ -138,7 +136,6 @@ fun functionDec(e, l, proc) =
 
 fun postFunctionDec() =
 	(popSalida();
-	print ("PostFdec"^Int.toString(!actualLevel-1)^"\n");	
 	actualLevel := !actualLevel-1)
 
 fun unitExp() = Ex (CONST 0)
@@ -174,7 +171,7 @@ let
 in
 	Ex( ESEQ(seq[MOVE(TEMP ra, a),
 		MOVE(TEMP ri, i),
-		EXP(externalCall("_checkindex", [TEMP ra, TEMP ri]))],
+		EXP(externalCall("_checkIndexArray", [TEMP ra, TEMP ri]))],
 		MEM(BINOP(PLUS, TEMP ra,
 			BINOP(MUL, TEMP ri, CONST tigerframe.wSz)))))
 end
@@ -191,16 +188,14 @@ let
 	val s = unEx size
 	val i = unEx init
 in
-	Ex (externalCall("_allocArray", [s, i]))
+	Ex (externalCall("_initArray", [s, i]))
 end
 
-fun callExp (name,false,isproc,lev:level,args) = (*COMPLETAR*)
+fun callExp (name,false,isproc,lev:level,args) = (*COMPLETADO*)
 		let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
-				val t = TEMP (newtemp())
 				val argtmp = map (#1) args'
 				val argins = map (#2) args'
 				val tmpsl = TEMP (newtemp())
-				val _ = print (name^"_"^Int.toString(getlevel lev)^": Llamado desde "^Int.toString(getActualLev())^"\n")
 				val inssl = [MOVE(tmpsl,
 													case Int.compare(getActualLev(),getlevel lev) of
 														LESS => TEMP fp
@@ -211,14 +206,19 @@ fun callExp (name,false,isproc,lev:level,args) = (*COMPLETAR*)
 																	|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
 															in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
 											)]
-		in Ex(ESEQ(seq (argins@inssl@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
+				val callexp = if isproc then Ex(ESEQ(seq (argins@inssl),CALL (NAME name,tmpsl::argtmp)))
+																else let val t = TEMP (newtemp())
+																			in Ex(ESEQ(seq (argins@inssl@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
+		in callexp end
 	| callExp (name,true,isproc,lev:level,args) =
 		let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
-				val t = TEMP (newtemp())
 				val argtmp = map (#1) args'
 				val argins = map (#2) args'
 				val tmpsl = TEMP (newtemp())
-		in Ex(ESEQ(seq (argins@[EXP (CALL (NAME name,argtmp)),MOVE (t,TEMP rv)]),t)) end
+				val callexp = if isproc then Ex(ESEQ(seq argins,CALL (NAME name,argtmp)))
+																else let val t = TEMP (newtemp())
+																		 in Ex(ESEQ(seq (argins@[EXP (CALL (NAME name,argtmp)),MOVE (t,TEMP rv)]),t)) end
+		in callexp end
 
 fun letExp ([], body) = Ex (unEx body)
  |  letExp (inits, body) = Ex (ESEQ(seq inits,unEx body))
@@ -332,12 +332,14 @@ fun binOpIntRelExp {left,oper=LtOp,right} = Cx(fn (lt,lf) => CJUMP(LT,unEx left,
 	| binOpIntRelExp {left,oper=LeOp,right} = Cx(fn (lt,lf) => CJUMP(LE,unEx left,unEx right,lt,lf))
 	| binOpIntRelExp {left,oper=GtOp,right} = Cx(fn (lt,lf) => CJUMP(GT,unEx left,unEx right,lt,lf))
 	| binOpIntRelExp {left,oper=GeOp,right} = Cx(fn (lt,lf) => CJUMP(GE,unEx left,unEx right,lt,lf))
+	| binOpIntRelExp {left,oper=EqOp,right} = Cx(fn (lt,lf) => CJUMP(EQ,unEx left,unEx right,lt,lf))
 	| binOpIntRelExp {left,oper,right} = raise Fail "Error interno 2 - tigertrans.sml"
 
 fun binOpStrExp {left,oper=LtOp,right} = Cx(fn (lt,lf) => CJUMP(LT,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf)) (*COMPLETADO*)
 	| binOpStrExp {left,oper=LeOp,right} = Cx(fn (lt,lf) => CJUMP(LE,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
 	| binOpStrExp {left,oper=GtOp,right} = Cx(fn (lt,lf) => CJUMP(GT,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
 	| binOpStrExp {left,oper=GeOp,right} = Cx(fn (lt,lf) => CJUMP(GE,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
+	| binOpStrExp {left,oper=EqOp,right} = Cx(fn (lt,lf) => CJUMP(EQ,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
 	| binOpStrExp {left,oper,right} = raise Fail "Error interno 3 - tigertrans.sml"
 
 end

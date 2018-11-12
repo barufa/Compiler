@@ -62,15 +62,13 @@ fun allocLocal (f: frame) b =
 val allocArg = allocLocal
 
 fun newFrame{name, formals} = 
-	let val f = {
-							name=name,
-							formals=formals,
-							locals=[],
-							actualLocal=ref localsInicial,
-							accesslist = ref ([]:access list)
-							}
-			(*val _ = !(#accesslist f) = List.map (fn x => allocLocal f x) formals*)
-	in f end
+	{
+		name=name,
+		formals=formals,
+		locals=[],
+		actualLocal=ref localsInicial,
+		accesslist = ref ([]:access list)
+	}
 
 fun name(f: frame) = #name f
 fun formals({accesslist=l, ...}: frame) = !l (* COMPLETADO *)

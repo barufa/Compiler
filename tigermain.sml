@@ -32,7 +32,7 @@ fun main(args) =
 		val _ = if arbol then tigerpp.exprAst expr else ()
 		(*No necesario*)
 		val lfrag = tigertrans.getResult()
-		fun imprimir (tigerframe.PROC {body,frame}) = print ("PROC: "^(tigerframe.name frame)^"\n"^tigerit.tree body^"\n")
+		fun imprimir (tigerframe.PROC {body,frame}) = print ("PROC: "^(tigerframe.name frame)^"\n")
 		    |imprimir (tigerframe.STRING (l,s)) = print ("STRING: "^l^" "^s^"\n")
 		(*val _ = List.map imprimir lfrag*)
 		fun split (l::ls) t s =
