@@ -181,7 +181,7 @@ fun recordExp l = (*COMPLETADO*)
 			val campos = map (fn (exp,n) => let val tmp = TEMP (newtemp()) in (MOVE(tmp,unEx exp),n,tmp) end) l
 			val camposreg = map (#3) campos
 			val campos = map (fn (e,_,_) => e) (Listsort.sort cmp campos)
-	in Ex(ESEQ(seq campos,externalCall("_allocRecord",camposreg))) end
+	in Ex(ESEQ(seq campos,externalCall("_allocRecord",CONST(length l)::camposreg))) end
 
 fun arrayExp{size, init} =
 let
@@ -206,7 +206,7 @@ fun callExp (name,false,isproc,lev:level,args) = (*COMPLETADO*)
 																	|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
 															in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
 											)]
-				val callexp = if isproc then Ex(ESEQ(seq (argins@inssl),CALL (NAME name,tmpsl::argtmp)))
+				val callexp = if isproc then Nx(seq (argins@inssl@[EXP(CALL (NAME name,tmpsl::argtmp))]))
 																else let val t = TEMP (newtemp())
 																			in Ex(ESEQ(seq (argins@inssl@[EXP (CALL (NAME name,tmpsl::argtmp)),MOVE (t,TEMP rv)]),t)) end
 		in callexp end
@@ -215,7 +215,7 @@ fun callExp (name,false,isproc,lev:level,args) = (*COMPLETADO*)
 				val argtmp = map (#1) args'
 				val argins = map (#2) args'
 				val tmpsl = TEMP (newtemp())
-				val callexp = if isproc then Ex(ESEQ(seq argins,CALL (NAME name,argtmp)))
+				val callexp = if isproc then Nx(seq (argins@[EXP(CALL (NAME name,argtmp))]))
 																else let val t = TEMP (newtemp())
 																		 in Ex(ESEQ(seq (argins@[EXP (CALL (NAME name,argtmp)),MOVE (t,TEMP rv)]),t)) end
 		in callexp end

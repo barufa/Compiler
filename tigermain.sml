@@ -45,7 +45,7 @@ fun main(args) =
 		val _ = List.map (fn (b,f) => let val _ =print ("PROC: "^(tigerframe.name f)^"\n")
 																			val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
 																	in 0 end) proclist
-		val _ = tigerinterp.inter true proclist stringlist
+		val _ = tigerinterp.inter false proclist stringlist
 		(****)
 	in
 		print "yes!!\n"
