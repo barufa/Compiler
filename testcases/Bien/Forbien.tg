@@ -1,8 +1,6 @@
-let	type A = array of int
-	var numbers:=A[4] of 65
-	function fill () = 
-		(for i := 0 to 3 do 
-			(for j:=i to 3 do numbers[i] := numbers[i]+1);
-		for i := 0 to 3 do (print(chr(numbers[i]))))
-in "Wachos";fill();0 end
+((
+for i:= 0 to 3 do
+	print(chr(48+i))
+);0)
+
 

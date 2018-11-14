@@ -30,7 +30,9 @@ fun newLevel{parent={parent, frame, level}, name, formals} =
 fun allocArg{parent, frame, level} b = tigerframe.allocArg frame b
 fun allocLocal{parent, frame, level} b = tigerframe.allocLocal frame b
 fun formals{parent, frame, level} = tigerframe.formals frame
+
 fun acclist({parent,frame,level},acc) = tigerframe.acclist (frame,acc)
+
 fun frame{parent, frame, level} = frame
 
 datatype exp =
@@ -126,12 +128,12 @@ fun preFunctionDec() =
 	(pushSalida(NONE);
 	actualLevel := !actualLevel+1)
 
-fun functionDec(e, l, proc) =
+fun functionDec(cuerpo, lev, proc) =
 	let	val body =
-				if proc then unNx e
-				else MOVE(TEMP rv, unEx e)
-		val body' = procEntryExit1(#frame l, body)
-		val () = procEntryExit{body=Nx body', level=l}
+				if proc then unNx cuerpo
+				else MOVE(TEMP rv, unEx cuerpo)
+		val body' = procEntryExit1(#frame lev, body)
+		val () = procEntryExit{body=Nx body', level=lev}
 	in	Ex(CONST 0) end
 
 fun postFunctionDec() =
@@ -214,7 +216,6 @@ fun callExp (name,false,isproc,lev:level,args) = (*COMPLETADO*)
 		let val args' = map (fn exp => let val tmp = TEMP (newtemp()) in (tmp,MOVE(tmp,unEx exp)) end) args
 				val argtmp = map (#1) args'
 				val argins = map (#2) args'
-				val tmpsl = TEMP (newtemp())
 				val callexp = if isproc then Ex(ESEQ(seq argins,CALL (NAME name,argtmp)))
 																else let val t = TEMP (newtemp())
 																		 in Ex(ESEQ(seq (argins@[EXP (CALL (NAME name,argtmp)),MOVE (t,TEMP rv)]),t)) end
@@ -267,11 +268,11 @@ fun forExp {lo, hi, var, body} = (*COMPLETADO*)
 			val body' = unNx body
 			val (lsigue,lfin) = (newlabel(),topSalida())
 			val instr = [MOVE(var',lo'),
-									CJUMP(GE,var',hi',lfin,lsigue),
+									CJUMP(GT,var',hi',lfin,lsigue),
 									LABEL lsigue,
 									body',
 									MOVE(var',BINOP(PLUS,var',CONST 1)),
-									CJUMP(GE,var',hi',lfin,lsigue),
+									CJUMP(GT,var',hi',lfin,lsigue),
 									LABEL lfin]
 	in Nx(seq instr) end
 

@@ -1,245 +1,316 @@
 bien!
 LetExp{decs=[TypeDec([{name=A,ty=ArrayTy(int)}])
-             VarDec{name=len,escape=false,typ=NONE,init=10}
-             VarDec{name=numbers,escape=true,typ=NONE,
-              init=ArrayExp{test=A,size=11,init=65}}
+             VarDec{name=len,escape=false,typ=NONE,init=4}
+             VarDec{name=a,escape=false,typ=NONE,init=1}
+             VarDec{name=b,escape=true,typ=NONE,init=10}
+             VarDec{name=c,escape=false,typ=NONE,init=20}
              FunctionDec([{name=fill,params=[],result=NONE
-             body=SeqExp([ForExp{var=i,escape=false,lo=0,hi=10,
-                          body=ForExp{var=j,escape=false,
-                               lo=VarExp(SimpleVar(i)),hi=10,
-                               body=AssignExp{
-                                     var=SubscriptVar(SimpleVar(numbers),
-                                          VarExp(SimpleVar(i))),
-                                     exp=OpExp{
-                                         left=VarExp(
-                                               SubscriptVar(SimpleVar(numbers),
-                                                VarExp(SimpleVar(i)))),
-                                          oper=PlusOp,right=1}}}}
-                  ForExp{var=i,escape=false,lo=0,hi=10,
-                  body=CallExp{func=print,
-                       args=[CallExp{func=chr,
-                             args=[VarExp(
-                                    SubscriptVar(SimpleVar(numbers),
-                                     VarExp(SimpleVar(i))))]}]}}])}])],
+             body=CallExp{func=print,
+                  args=[CallExp{func=chr,
+                        args=[OpExp{left=65,oper=PlusOp,
+                               right=VarExp(SimpleVar(b))}]}]}}])],
  body=SeqExp([CallExp{func=fill,args=[]}0])}
-STRING: L6 "Wachos"
 PROC: fill
 MOVE(
- TEMP T1,
- CONST 0)
-
-CJUMP(GE,
- TEMP T1,
- CONST 10,
- L0,L3)
-
-LABEL L3
-
-MOVE(
- TEMP T2,
- TEMP T1)
-
-CJUMP(GE,
- TEMP T2,
- CONST 10,
- L1,L2)
-
-LABEL L2
-
-MOVE(
  TEMP T3,
- MEM(
-  BINOP(PLUS,
-   MEM(
-    BINOP(PLUS,
-     TEMP FP,
-     CONST 8)),
-   CONST ~4)))
-
-MOVE(
- TEMP T4,
- TEMP T1)
-
-EXP(
- CALL(
-  NAME _checkIndexArray,
-   TEMP T3,
-   TEMP T4))
-
-MOVE(
- TEMP T16,
  BINOP(PLUS,
-  TEMP T3,
-  BINOP(MUL,
-   TEMP T4,
-   CONST 4)))
-
-MOVE(
- TEMP T5,
- MEM(
-  BINOP(PLUS,
-   MEM(
-    BINOP(PLUS,
-     TEMP FP,
-     CONST 8)),
-   CONST ~4)))
-
-MOVE(
- TEMP T6,
- TEMP T1)
-
-EXP(
- CALL(
-  NAME _checkIndexArray,
-   TEMP T5,
-   TEMP T6))
-
-MOVE(
- MEM(
-  TEMP T16),
- BINOP(PLUS,
+  CONST 65,
   MEM(
    BINOP(PLUS,
-    TEMP T5,
-    BINOP(MUL,
-     TEMP T6,
-     CONST 4))),
-  CONST 1))
-
-MOVE(
- TEMP T2,
- BINOP(PLUS,
-  TEMP T2,
-  CONST 1))
-
-CJUMP(GE,
- TEMP T2,
- CONST 10,
- L1,L2)
-
-LABEL L1
-
-MOVE(
- TEMP T1,
- BINOP(PLUS,
-  TEMP T1,
-  CONST 1))
-
-CJUMP(GE,
- TEMP T1,
- CONST 10,
- L0,L3)
-
-LABEL L0
-
-MOVE(
- TEMP T7,
- CONST 0)
-
-CJUMP(GE,
- TEMP T7,
- CONST 10,
- L4,L5)
-
-LABEL L5
-
-MOVE(
- TEMP T8,
- MEM(
-  BINOP(PLUS,
-   MEM(
-    BINOP(PLUS,
-     TEMP FP,
-     CONST 8)),
-   CONST ~4)))
-
-MOVE(
- TEMP T9,
- TEMP T7)
-
-EXP(
- CALL(
-  NAME _checkIndexArray,
-   TEMP T8,
-   TEMP T9))
-
-MOVE(
- TEMP T10,
- MEM(
-  BINOP(PLUS,
-   TEMP T8,
-   BINOP(MUL,
-    TEMP T9,
-    CONST 4))))
+    MEM(
+     BINOP(PLUS,
+      TEMP FP,
+      CONST 8)),
+    CONST ~4))))
 
 EXP(
  CALL(
   NAME chr,
-   TEMP T10))
+   TEMP T3))
 
 MOVE(
- TEMP T12,
+ TEMP T5,
  TEMP RV)
 
 MOVE(
- TEMP T13,
- TEMP T12)
+ TEMP T6,
+ TEMP T5)
 
 EXP(
  CALL(
   NAME print,
-   TEMP T13))
-
-MOVE(
- TEMP T7,
- BINOP(PLUS,
-  TEMP T7,
-  CONST 1))
-
-CJUMP(GE,
- TEMP T7,
- CONST 10,
- L4,L5)
-
-LABEL L4
+   TEMP T6))
 
 PROC: _tigermain
 MOVE(
  TEMP T0,
- CONST 10)
+ CONST 4)
 
 MOVE(
- TEMP T18,
- BINOP(PLUS,
-  TEMP FP,
-  CONST ~4))
-
-MOVE(
- TEMP T17,
- CALL(
-  NAME _initArray,
-   CONST 11,
-   CONST 65))
+ TEMP T1,
+ CONST 1)
 
 MOVE(
  MEM(
-  TEMP T18),
- TEMP T17)
+  BINOP(PLUS,
+   TEMP FP,
+   CONST ~4)),
+ CONST 10)
 
 MOVE(
- TEMP T15,
+ TEMP T2,
+ CONST 20)
+
+MOVE(
+ TEMP T8,
  TEMP FP)
 
 EXP(
  CALL(
   NAME fill,
-   TEMP T15))
-
-EXP(
- NAME L6)
+   TEMP T8))
 
 MOVE(
  TEMP RV,
  CONST 0)
 
 Comienzo de ejecución...
+_tigermain:
+MOVE(
+ TEMP T0,
+ CONST 4)
+MOVE(
+ TEMP T1,
+ CONST 1)
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP FP,
+   CONST ~4)),
+ CONST 10)
+MOVE(
+ TEMP T2,
+ CONST 20)
+MOVE(
+ TEMP T8,
+ TEMP FP)
+EXP(
+ CALL(
+  NAME fill,
+   TEMP T8))
+MOVE(
+ TEMP RV,
+ CONST 0)
+Argumentos: 
+TEMPS:
+FP -> ~1048576
+MEM:
+****************
+MOVE(
+ TEMP T0,
+ CONST 4)
+****************
+TEMPS:
+FP -> ~1048576
+T0 -> 4
+MEM:
+****************
+MOVE(
+ TEMP T1,
+ CONST 1)
+****************
+TEMPS:
+FP -> ~1048576
+T0 -> 4
+T1 -> 1
+MEM:
+****************
+MOVE(
+ MEM(
+  BINOP(PLUS,
+   TEMP FP,
+   CONST ~4)),
+ CONST 10)
+****************
+TEMPS:
+FP -> ~1048576
+T0 -> 4
+T1 -> 1
+MEM:
+~1048580 -> 10
+****************
+MOVE(
+ TEMP T2,
+ CONST 20)
+****************
+TEMPS:
+FP -> ~1048576
+T0 -> 4
+T1 -> 1
+T2 -> 20
+MEM:
+~1048580 -> 10
+****************
+MOVE(
+ TEMP T8,
+ TEMP FP)
+****************
+TEMPS:
+FP -> ~1048576
+T0 -> 4
+T1 -> 1
+T2 -> 20
+T8 -> ~1048576
+MEM:
+~1048580 -> 10
+****************
+EXP(
+ CALL(
+  NAME fill,
+   TEMP T8))
+****************
+fill:
+MOVE(
+ TEMP T3,
+ BINOP(PLUS,
+  CONST 65,
+  MEM(
+   BINOP(PLUS,
+    MEM(
+     BINOP(PLUS,
+      TEMP FP,
+      CONST 8)),
+    CONST ~4))))
+EXP(
+ CALL(
+  NAME chr,
+   TEMP T3))
+MOVE(
+ TEMP T5,
+ TEMP RV)
+MOVE(
+ TEMP T6,
+ TEMP T5)
+EXP(
+ CALL(
+  NAME print,
+   TEMP T6))
+Argumentos: ~1048576  
+TEMPS:
+FP -> ~2097152
+T0 -> 4
+T1 -> 1
+T2 -> 20
+T8 -> ~1048576
+MEM:
+~1048580 -> 10
+****************
+MOVE(
+ TEMP T3,
+ BINOP(PLUS,
+  CONST 65,
+  MEM(
+   BINOP(PLUS,
+    MEM(
+     BINOP(PLUS,
+      TEMP FP,
+      CONST 8)),
+    CONST ~4))))
+****************
+TEMPS:
+FP -> ~2097152
+T0 -> 4
+T1 -> 1
+T2 -> 20
+T3 -> 65
+T8 -> ~1048576
+MEM:
+~2097144 -> 0
+~1048580 -> 10
+~4 -> 0
+****************
+EXP(
+ CALL(
+  NAME chr,
+   TEMP T3))
+****************
+TEMPS:
+FP -> ~2097152
+T0 -> 4
+RV -> 0
+T1 -> 1
+T2 -> 20
+T3 -> 65
+T8 -> ~1048576
+MEM:
+0 -> 0
+~2097144 -> 0
+~1048580 -> 10
+~4 -> 0
+****************
+MOVE(
+ TEMP T5,
+ TEMP RV)
+****************
+TEMPS:
+FP -> ~2097152
+T0 -> 4
+RV -> 0
+T1 -> 1
+T2 -> 20
+T3 -> 65
+T5 -> 0
+T8 -> ~1048576
+MEM:
+0 -> 0
+~2097144 -> 0
+~1048580 -> 10
+~4 -> 0
+****************
+MOVE(
+ TEMP T6,
+ TEMP T5)
+****************
+TEMPS:
+FP -> ~2097152
+T0 -> 4
+RV -> 0
+T1 -> 1
+T2 -> 20
+T3 -> 65
+T5 -> 0
+T6 -> 0
+T8 -> ~1048576
+MEM:
+0 -> 0
+~2097144 -> 0
+~1048580 -> 10
+~4 -> 0
+****************
+EXP(
+ CALL(
+  NAME print,
+   TEMP T6))
+****************
+ATEMPS:
+FP -> ~1048576
+T0 -> 4
+RV -> 0
+T1 -> 1
+T2 -> 20
+T3 -> 65
+T5 -> 0
+T6 -> 0
+T8 -> ~1048576
+MEM:
+0 -> 0
+~2097144 -> 0
+~1048580 -> 10
+~4 -> 0
+****************
+MOVE(
+ TEMP RV,
+ CONST 0)
+****************
+Fin de ejecución.
+yes!!

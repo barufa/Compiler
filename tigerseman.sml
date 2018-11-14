@@ -323,47 +323,6 @@ fun transExp(venv, tenv) =
 														if List.exists (fn x => x=pname) lb then error("El parametro ("^pname^") esta repetido en"^
 																																					 " la definicion de ("^fname^")",pos) 
 														else pname::lb) [] params) fs
-				(*(*Chequear los tipos existan y sean iguales entre result y body*)
-				val tf = List.map (fn ({name=fname,params,result,body},pos) =>
-									let	
-										fun checkpar ps = List.map (fn ({name=pname,typ,escape}) =>
-															case typ of
-																NameTy s => (case tabBusca(s,tenv) of
-																							SOME t' => (pname,t',escape)
-																							| _    	=>  error("El tipo del parametro ("^pname^") de la funcion ("
-																																^fname^") no esta definido",pos))
-																| _ 		 => error("Error interno relacionado al parser",pos)) ps
-										val ps = checkpar params(*Chequeo que los tipos de los parametros esten bien*)
-										val vformals = List.map (fn (name,tipo,escape) => tipo) ps
-										fun fresult res bod =
-											let 
-												val tresult = case res of
-																				SOME s => (case tabBusca(s,tenv) of
-																										SOME t' => t'
-																										| NONE  => error("El tipo ("^s^") no esta definido",pos))
-																				| NONE => TUnit
-											in tresult end
-										val vresult = fresult result body
-									in (fname,{level=topLevel(),label=fname,formals=vformals,result=vresult,extern=false},ps,body,pos) end) fs
-				
-				val lf = List.map (fn (name,{level,...},ps,body,pos) => print ("Defino "^name^" con nivel "^Int.toString(getlevel level)^"\n")) tf
-				val lf = List.map (fn (name,fnc,ps,body,pos) => (name,Func fnc)) tf
-				val venv' = tabInserList(venv,lf)
-				val explist = List.map (fn (name,{result,level,...},ps,body,pos) => 
-												let
-													val ps' = List.map (fn (name,tipo,escape) => (name,Var {ty=tipo,access=allocLocal (topLevel()) (!escape),level=getActualLev()})) ps
-													val boolformals = map (fn (_,_,	escape) => !escape) ps
-													val acclist = List.map (fn (_,Var {access,...}) => access
-																										 | _ => error("Error interno ralacionado a accesslist",pos)) ps'
-													val nlevel = newLevel ({parent=level,name=name,formals=boolformals})
-													val _ = pushLevel(nlevel)
-													val venv_intern = tabInserList(venv',ps')
-													val {exp=expbody,ty=tbody} = transExp (venv_intern,tenv) body
-													val _ = if tiposIguales result tbody then () else error("La funcion ("^name^") no posee"^
-																																						" el mismo tipo que su cuerpo",pos)
-													val _ = popLevel()												
-												in functionDec (expbody,nlevel,result=TUnit) end) tf
-				*)
 					(*Veo que los tipo existan*)
 				val typfuns = List.map (fn ({name=fname,params,result,body},pos) =>(*Veo los tipos de los argumentos y el resultado*)
 					let	
@@ -402,6 +361,7 @@ fun transExp(venv, tenv) =
 																								| SOME _                				=> error("No deberia pasar 1",pos)
 																								| NONE                  				=> error("No deberia pasar 2",pos)
 																val _ = pushLevel l
+																val _ = acclist(l,allocMem tigertrans.fpPrevLev)
 																val arglist = List.map (fn {name,escape,typ} => 
 																													let val t = case typ of
 																																				NameTy s => (case tabBusca(s,tenv) of
@@ -413,7 +373,6 @@ fun transExp(venv, tenv) =
 																val {exp=expbody,ty=tbody} = transExp (venv_intern,tenv) body
 																val _ = if tiposIguales res tbody then () else error("La funcion ("^fname^") no posee"^
 																												 														 " el mismo tipo que su cuerpo",pos)
-
 																val _ = popLevel()
 																val _ = postFunctionDec()
 														in functionDec(expbody,l,res = TUnit) end

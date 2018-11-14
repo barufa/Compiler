@@ -29,6 +29,7 @@ val formals : frame -> access list
 val acclist : frame * access-> access
 val allocLocal : frame -> bool -> access
 val allocArg : frame -> bool -> access
+val allocMem : int -> access
 
 val string : tigertemp.label * string -> string
 val exp : access -> tigertree.exp -> tigertree.exp

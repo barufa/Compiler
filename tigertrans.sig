@@ -12,12 +12,13 @@ val newLevel : {parent: level, name: tigertemp.label,
 				formals: bool list} -> level
 val formals : level -> access list
 val frame : level -> tigerframe.frame
-val acclist : level * access -> access
 val getActualLev : unit -> int
 val allocArg : level -> bool -> access
 val allocLocal : level -> bool -> access
-(*val ('a, 'b, 'c) getlevel : {frame : 'a, level : 'b, parent : 'c} -> 'b*)
 val getlevel: level -> int
+val acclist: level * access -> access
+val allocMem : int -> access
+val fpPrevLev: int
 
 type exp 
 val procEntryExit : {level: level, body: exp} -> unit

@@ -51,6 +51,8 @@ val localsGap = ~4 			(* bytes *)
 val specialregs = [rv, fp, sp]
 val argregs = []
 
+fun allocMem(k) = InFrame k
+
 fun allocLocal (f: frame) b =
 	case b of
 	  true =>
@@ -72,7 +74,9 @@ fun newFrame{name, formals} =
 
 fun name(f: frame) = #name f
 fun formals({accesslist=l, ...}: frame) = !l (* COMPLETADO *)
-fun acclist({accesslist=l, ...}: frame,acc: access) = let val _ = !l = !l@[acc] in acc end
+
+fun acclist({accesslist=l, ...}:frame,acc: access) = let val _ = l:=(!l@[acc]) in acc end
+
 fun string(l, s) = l^tigertemp.makeString(s)^"\n"
 fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
 | exp(InReg l) e = TEMP l
