@@ -30,22 +30,22 @@ fun main(args) =
 		val _ = findEscape(expr)
 		val _ = transProg(expr)		
 		val _ = if arbol then tigerpp.exprAst expr else ()
-		(*No necesario*)
 		val lfrag = tigertrans.getResult()
+		(*No necesario
 		fun imprimir (tigerframe.PROC {body,frame}) = print ("PROC: "^(tigerframe.name frame)^"\n")
 		    |imprimir (tigerframe.STRING (l,s)) = print ("STRING: "^l^" "^s^"\n")
-		(*val _ = List.map imprimir lfrag*)
+		val _ = List.map imprimir lfrag*)
 		fun split (l::ls) t s =
 			(case l of
 			 tigerframe.PROC {body,frame} => split ls (t@[(tigercanon.linearize body,frame)]) s
 			 | tigerframe.STRING x => split ls t (s@[x]))
-		    | split [] t s = (t,s)
+		   | split [] t s = (t,s)
 		val (proclist,stringlist) = split lfrag [] []
 		val _ = List.map (fn (l,s) => print ("STRING: "^l^" \""^s^"\"\n")) stringlist
 		val _ = List.map (fn (b,f) => let val _ =print ("PROC: "^(tigerframe.name f)^"\n")
 																			val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
 																	in 0 end) proclist
-		val _ = tigerinterp.inter false proclist stringlist
+		val _ = tigerinterp.inter true proclist stringlist
 		(****)
 	in
 		print "yes!!\n"

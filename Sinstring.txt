@@ -2,7 +2,7 @@ bien!
 LetExp{decs=[TypeDec([{name=A,ty=ArrayTy(int)}])
              VarDec{name=len,escape=false,typ=NONE,init=10}
              VarDec{name=numbers,escape=true,typ=NONE,
-              init=ArrayExp{test=A,size=10,init=65}}
+              init=ArrayExp{test=A,size=11,init=65}}
              FunctionDec([{name=fill,params=[],result=NONE
              body=SeqExp([ForExp{var=i,escape=false,lo=0,hi=10,
                           body=ForExp{var=j,escape=false,
@@ -21,7 +21,7 @@ LetExp{decs=[TypeDec([{name=A,ty=ArrayTy(int)}])
                              args=[VarExp(
                                     SubscriptVar(SimpleVar(numbers),
                                      VarExp(SimpleVar(i))))]}]}}])}])],
- body=SeqExp([CallExp{func=fill,args=[]}00])}
+ body=SeqExp([CallExp{func=fill,args=[]}0])}
 PROC: fill
 MOVE(
  TEMP T1,
@@ -217,7 +217,7 @@ MOVE(
  TEMP T17,
  CALL(
   NAME _initArray,
-   CONST 10,
+   CONST 11,
    CONST 65))
 
 MOVE(
@@ -239,5 +239,3 @@ MOVE(
  CONST 0)
 
 Comienzo de ejecución...
-KJIHGFEDCBFin de ejecución.
-yes!!
