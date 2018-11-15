@@ -32,21 +32,27 @@ fun main(args) =
 		val _ = transProg(expr)		
 		val _ = if arbol then tigerpp.exprAst expr else ()
 		val lfrag = tigertrans.getResult()
+		fun funcanon(x) = if canon then tigercanon.traceSchedule(tigercanon.basicBlocks(tigercanon.linearize x))
+											else tigercanon.linearize x
 		fun split (l::ls) t s =
 			(case l of
-			 tigerframe.PROC {body,frame} => split ls (t@[(tigercanon.linearize body,frame)]) s
+			 tigerframe.PROC {body,frame} => split ls (t@[(funcanon body,frame)]) s
 			 | tigerframe.STRING x => split ls t (s@[x]))
 		   | split [] t s = (t,s)
 		val (proclist,stringlist) = split lfrag [] []
-		val _ = List.map (fn (l,s) => print ("STRING: "^l^" \""^s^"\"\n")) stringlist
-		val _ = List.map (fn (b,f) => let val _ = print ("PROC: "^(tigerframe.name f)^" args: ")
-																			val _ = map (fn (InReg label) => print("TEMP "^label^"; ")
-																										| (InFrame k)=> print("MEM "^Int.toString(k)^"; ")) (tigerframe.formals f)
-																			val _ = print("\n") 
-																			val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
-																	in 0 end) proclist
-		val _ = tigerinterp.inter false proclist stringlist
-		(****)
+		val _ = if code then
+							let 
+								val _ = List.map (fn (l,s) => print ("STRING: "^l^" \""^s^"\"\n")) stringlist
+								val _ = List.map (fn (b,f) => let val _ = print ("PROC: "^(tigerframe.name f)^" args: ")
+																									val _ = map (fn (InReg label) => print("TEMP "^label^"; ")
+																																| (InFrame k)=> print("MEM "^Int.toString(k)^"; ")) (tigerframe.formals f)
+																									val _ = print("\n") 
+																									val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
+																							in 0 end) proclist
+							in () end
+						else ()
+		val _ = if inter then tigerinterp.inter flow proclist stringlist
+						else ()
 	in
 		print "yes!!\n"
 	end	handle Fail s => print("Fail: "^s^"\n")

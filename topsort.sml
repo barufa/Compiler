@@ -16,32 +16,3 @@ in
 			val (starts, _) = ListPair.unzip graph
 		in	sort(starts, [], []) end
 end
-(*
-(* 3 *)
-(* a esto hay que mejorarlo mucho! *)
-fun integraTEnvs(env, env') =
-	let	val res = fromTab env
-		fun aux(c, v) = tabRInserta(c, v, res)
-	in
-		tabAplica(aux, env');
-		res
-	end
-(*------------------------------*)
-
-fun muestra(s, t)=
-	let	fun aux(NameTy t) = print("NameTy "^t)
-		| aux(ArrayTy t) = print("ArrayTy "^t)
-		| aux(RecordTy l) =
-			let	fun f{name, typ,...} =
-					(print(name^" "); aux typ)
-			in
-				(print "RecordTy "; app f l)
-			end
-	in
-		print s; print "    "; aux t; print "\n"
-	end
-fun string2Ty(s, t) = (NameTy s, t)
-val t = colectaNameTy prueba
-val l = List.map string2Ty (tabAList t);
-val r = topsort l;
-*)

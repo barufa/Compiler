@@ -160,7 +160,7 @@ fun varDec(acc) = simpleVar(acc, getActualLev())
 fun fieldVar(var, field) = (*COMPLETADO*)
 	let val tmp = newtemp()
 			val var' = unEx var
-			val instr = [EXP(externalCall("_checknil", [var'])),
+			val instr = [EXP(externalCall("_checkNil", [var'])),
 									MOVE(TEMP tmp, MEM(BINOP(PLUS,var',BINOP(MUL,CONST field,CONST wSz))))]
 	in Ex(ESEQ(seq instr,TEMP tmp)) end
 
@@ -334,13 +334,19 @@ fun binOpIntRelExp {left,oper=LtOp,right} = Cx(fn (lt,lf) => CJUMP(LT,unEx left,
 	| binOpIntRelExp {left,oper=GtOp,right} = Cx(fn (lt,lf) => CJUMP(GT,unEx left,unEx right,lt,lf))
 	| binOpIntRelExp {left,oper=GeOp,right} = Cx(fn (lt,lf) => CJUMP(GE,unEx left,unEx right,lt,lf))
 	| binOpIntRelExp {left,oper=EqOp,right} = Cx(fn (lt,lf) => CJUMP(EQ,unEx left,unEx right,lt,lf))
+	| binOpIntRelExp {left,oper=NeOp,right} = Cx(fn (lt,lf) => CJUMP(NE,unEx left,unEx right,lt,lf))
+(*
 	| binOpIntRelExp {left,oper,right} = raise Fail "Error interno 2 - tigertrans.sml"
+*)
 
 fun binOpStrExp {left,oper=LtOp,right} = Cx(fn (lt,lf) => CJUMP(LT,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf)) (*COMPLETADO*)
 	| binOpStrExp {left,oper=LeOp,right} = Cx(fn (lt,lf) => CJUMP(LE,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
 	| binOpStrExp {left,oper=GtOp,right} = Cx(fn (lt,lf) => CJUMP(GT,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
 	| binOpStrExp {left,oper=GeOp,right} = Cx(fn (lt,lf) => CJUMP(GE,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
 	| binOpStrExp {left,oper=EqOp,right} = Cx(fn (lt,lf) => CJUMP(EQ,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
+	| binOpStrExp {left,oper=NeOp,right} = Cx(fn (lt,lf) => CJUMP(NE,externalCall("_stringCompare", [unEx left, unEx right]),CONST 0,lt,lf))
+(*
 	| binOpStrExp {left,oper,right} = raise Fail "Error interno 3 - tigertrans.sml"
+*)
 
 end
