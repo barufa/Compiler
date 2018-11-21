@@ -23,11 +23,3 @@ do
 	echo "$i:"
 	./tiger -inter -canon < "$dir/testcases/Mal/$i"
 done
-
-echo ""
-echo "Guido funca:"
-for i in $(ls "$dir/testcases/Guido/good" -C1)
-do
-	echo "$i:"
-	./tiger -inter -canon < "$dir/testcases/Guido/good/$i"
-done

@@ -60,7 +60,7 @@ struct
 
 		(* alocación de memoria *)
 		local
-			val nextfree = ref 0
+			val nextfree = ref 1
 		in
 			fun getNewMem(n) =
 			let
@@ -163,7 +163,8 @@ struct
 		fun ordFun(strPtr::rest) =
 		let
 			val str = loadString strPtr
-			val ch = hd(explode(str))
+			val lch = explode(str)
+			val ch = if str="" then (chr 0) else hd(explode(str))
 		in
 			ord(ch)
 		end

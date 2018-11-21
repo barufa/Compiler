@@ -160,9 +160,8 @@ fun varDec(acc) = simpleVar(acc, getActualLev())
 fun fieldVar(var, field) = (*COMPLETADO*)
 	let val tmp = newtemp()
 			val var' = unEx var
-			val instr = [EXP(externalCall("_checkNil", [var'])),
-									MOVE(TEMP tmp, MEM(BINOP(PLUS,var',BINOP(MUL,CONST field,CONST wSz))))]
-	in Ex(ESEQ(seq instr,TEMP tmp)) end
+			val instr = [EXP(externalCall("_checkNil", [var']))]
+	in Ex(ESEQ(seq instr,MEM(BINOP(PLUS,var',BINOP(MUL,CONST field,CONST wSz))))) end
 
 fun subscriptVar(arr, ind) =
 let
@@ -183,7 +182,7 @@ fun recordExp l = (*COMPLETADO*)
 			val campos = map (fn (exp,n) => let val tmp = TEMP (newtemp()) in (MOVE(tmp,unEx exp),n,tmp) end) l
 			val camposreg = map (#3) campos
 			val campos = map (fn (e,_,_) => e) (Listsort.sort cmp campos)
-	in Ex(ESEQ(seq campos,externalCall("_allocRecord",camposreg))) end
+	in Ex(ESEQ(seq campos,externalCall("_allocRecord",CONST(length (camposreg))::camposreg))) end
 
 fun arrayExp{size, init} =
 let

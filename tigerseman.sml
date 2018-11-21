@@ -137,7 +137,6 @@ fun transExp(venv, tenv) =
 				(* Traducir cada expresión de fields *)
 				val tfields' = zip(map (fn (sy,ex) => (sy, trexp ex)) fields) 0
 				fun cmp (((sx,_),_),((sy,_),_)) = String.compare (sx,sy)
-				val tfields = Listsort.sort cmp tfields'
 				(* Buscar el tipo *)
 				val (tyr, cs) = case tabBusca(typ, tenv) of
 													SOME t => (case tipoReal t of
@@ -145,6 +144,7 @@ fun transExp(venv, tenv) =
 																			| _             => error(typ^" no es de tipo record", nl))
 													| NONE => error("Tipo inexistente ("^typ^")", nl)
 				(* Verificar que cada campo esté en orden y tenga una expresión del tipo que corresponde *)
+				val tfields = Listsort.sort cmp tfields'				
 				fun verificar [] [] = []
 				  | verificar (c::cs) [] = error("Faltan campos", nl)
 				  | verificar [] (c::cs) = error("Sobran campos", nl)
@@ -382,6 +382,10 @@ fun transExp(venv, tenv) =
 		| trdec (venv,tenv) (TypeDec ts) = (*COMPLETADO*)
 			let
 				(*TypeDec of ({name: symbol, ty: ty} * pos) list*)
+				fun cmp ({name=sx,...},{name=sy,...}) = String.compare (sx,sy)
+				fun ordRecords ({name,ty=RecordTy rs},n) = ({name=name,ty=RecordTy (Listsort.sort cmp rs)},n)
+						| ordRecords x = x
+				val ts = List.map ordRecords ts
 				fun buscarep [] 											= (false,"",0) (*Toma un nombre y se fija si aparece en el resto de la lista*)
 						| buscarep (({name=s,ty},pos)::t) = if List.exists (fn({name=x,...},p) => x=s) t then (true,s,pos) else buscarep t
 				val reps = buscarep ts (*Si los nombre estan repetido, tiro el error correspondiente*)
