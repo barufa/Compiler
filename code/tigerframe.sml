@@ -32,7 +32,7 @@ type register = string
 datatype frag = PROC of {body: tigertree.stm, frame: frame}
 	| STRING of tigertemp.label * string
 
-
+(* COMPLETAR registros *)
 val rv = "RV"				(* return value  *)
 val ov = "OV"				(* overflow value (edx en el 386) *)
 val fp = "FP"				(* frame pointer *)
@@ -82,5 +82,12 @@ fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
 | exp(InReg l) e = TEMP l
 fun externalCall(s, l) = CALL(NAME s, l)
 
-fun procEntryExit1 (frame,body) = body
+fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
 end
+
+fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
+	instr @ [tigerassem.OPER {assem = "",dst = [rv,sp,fp] @ caleesaves,src = [],jump = NONE}]
+end
+
+(*fun procEntryExit3 (frame,body) = body (*COMPLETAR*)
+end*)
