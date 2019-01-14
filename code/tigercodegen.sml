@@ -10,7 +10,7 @@ fun codegen frame stm =
 let val ilist = ref ([]:instr list)
 		fun emit x = ilist := x::!ilist
 		fun result gen = let val t = tigertemp.newtemp() in (gen t; t) end
-		(* munchStm: Tree.stm -> unit
+		(* munchStm: Tree.stm -> Unit
      * Emits assembly to execute the given statement. *)
     (* Pagina 204 *)
     fun munchStm (MOVE (TEMP t1, e)) = (*COMPLETAR*)
