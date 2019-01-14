@@ -33,23 +33,41 @@ datatype frag = PROC of {body: tigertree.stm, frame: frame}
 	| STRING of tigertemp.label * string
 
 (* COMPLETAR registros *)
-val rv = "RV"				(* return value  *)
-val ov = "OV"				(* overflow value (edx en el 386) *)
-val fp = "FP"				(* frame pointer *)
-val sp = "SP"				(* stack pointer *)
+val rv = "rax"      (* return value  *)
+val fp = "rbp"      (* frame pointer *)
+val sp = "rsp"      (* stack pointer *)
+val ov  = "rdx"     (* overflow value *)
+val rax = "rax"
+val rdx = "rdx"
 
 val fpPrev = 0				(* offset (bytes) *)
-val fpPrevLev = 8			(* offset (bytes) *)
-val wSz = 4				(* word size in bytes *)
-val log2WSz = 2				(* base two logarithm of word size in bytes *)
+val fpPrevLev = ~WSz			(* offset (bytes) *)
+val wSz = 8				(* word size in bytes *)
+val log2WSz = 3				(* base two logarithm of word size in bytes *)
 val calldefs = [rv]
 val callersaves = []
 val calleesaves = []
 
+
+val argregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+
+val callersaves = ["r10", "r11"] (* registers that must be preserved by the caller *)
+val calleesaves = ["rbx", "r12", "r13", "r14", "r15"] (* registers that must be preserved by the callee *)
+val calldefs = [RV] @ argregs @ callersaves
+               (* registers possibly written by the callee *)
+val machineRegs = specialregs @ argregs @ callersaves @ calleesaves
+                  (* all registers available for coloring *)
+
+
+
 val localsInicial = 0			(* words *)
 val localsGap = ~4 			(* bytes *)
-val specialregs = [rv, fp, sp]
-val argregs = []
+val specialregs = [rv, fp, sp] (* special purpose registers *)
+val argregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"] (* registers for passing first args *)
+val callersaves = ["r10", "r11"] (* registers that must be preserved by the caller *)
+val calleesaves = ["rbx", "r12", "r13", "r14", "r15"] (* registers that must be preserved by the callee *)
+val calldefs = [rv] @ argregs @ callersaves (* registers possibly written by the callee *)
+val machineRegs = specialregs @ argregs @ callersaves @ calleesaves
 
 fun allocMem(k) = InFrame k
 
@@ -63,7 +81,7 @@ fun allocLocal (f: frame) b =
 	| false => InReg(tigertemp.newtemp())
 val allocArg = allocLocal
 
-fun newFrame{name, formals} = 
+fun newFrame{name, formals} =
 	{
 		name=name,
 		formals=formals,
@@ -79,7 +97,7 @@ fun acclist({accesslist=l, ...}:frame,acc: access) = let val _ = l:=(!l@[acc]) i
 
 fun string(l, s) = l^tigertemp.makeString(s)^"\n"
 fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
-| exp(InReg l) e = TEMP l
+	| exp(InReg l) e = TEMP l
 fun externalCall(s, l) = CALL(NAME s, l)
 
 fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
