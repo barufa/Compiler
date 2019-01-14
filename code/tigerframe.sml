@@ -49,7 +49,7 @@ val callersaves = []
 val calleesaves = []
 
 
-val argregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
+val argsregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
 
 val callersaves = ["r10", "r11"] (* registers that must be preserved by the caller *)
 val calleesaves = ["rbx", "r12", "r13", "r14", "r15"] (* registers that must be preserved by the callee *)
@@ -101,11 +101,9 @@ fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
 fun externalCall(s, l) = CALL(NAME s, l)
 
 fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
-end
 
 fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
 	instr @ [tigerassem.OPER {assem = "",dst = [rv,sp,fp] @ caleesaves,src = [],jump = NONE}]
-end
 
 (*fun procEntryExit3 (frame,body) = body (*COMPLETAR*)
 end*)

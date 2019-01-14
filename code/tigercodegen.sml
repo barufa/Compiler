@@ -1,5 +1,5 @@
-structure tigercodegen :> tigercodegen =
 struct
+structure tigercodegen :> tigercodegen =
 
 open tigerframe
 open tigerassem
@@ -67,4 +67,12 @@ let val ilist = ref ([]:instr list)
 	   * Push all the argument to the registers and the stack according to the
 	   * calling convention. *)
 		fun muchArgs args = (*COMPLETAR*)
+			let fun muchArgsaux (x:arg) (r:argregs) =(*Mover x a r*)
+								let val _ = munchStm(MOVE (TEMP r, x))
+								in muchArgsaux arg argregs end
+						| muchArgsaux (x:arg) [] =(*Mover x a la pila*)
+								let val _ = emit(OPER{assem = "pushq 'd0", src = [munchExp x], dst = [], jump = NONE})
+								in  muchArgsaux arg [] end
+						| muchArgsaux [] _ = ()(*Finaliza la funcion*)
+			in muchArgsaux args argsregs end
 in munchStm stm; rev(!ilist) end
