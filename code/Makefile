@@ -16,23 +16,18 @@ REMOVE=rm -f
 MOVE=mv
 EXEFILE=
 
-# DOS
-#REMOVE=del
-#MOVE=move
-#EXEFILE=.exe
-
 .SUFFIXES : .sig .sml .ui .uo
 
 GRALOBJS= tigerabs.uo tigergrm.uo tigerlex.uo tigernlin.uo tigerinterp.uo tigercanon.uo\
 	  tigerpp.uo tigerescap.uo tigertab.uo tigerseman.uo tigertemp.uo tigertopsort.uo tigertrans.uo\
-	  tigerassem.uo tigermain.uo tigertree.uo tigerframe.uo tigerit.uo tigerpila.uo
+	  tigerassem.uo tigercodegen.uo tigermain.uo tigertree.uo tigerframe.uo tigerit.uo tigerpila.uo
 
 all: depend tiger
 
 tiger: $(GRALOBJS) $(OBJSGEN)
 	$(MOSMLL) -o tiger $(EXEFILE) tigermain.uo
 
-tigergrm.sml tigergrm.sig: tigergrm.y 
+tigergrm.sml tigergrm.sig: tigergrm.y
 	$(MOSMLYACC) tigergrm.y
 
 tigerlex.sml: tigerlex.lex
@@ -74,9 +69,9 @@ tigercodegen.uo: tigercodegen.ui tigertree.uo tigerframe.ui tigerassem.uo \
 tigerpila.uo: tigerpila.ui 
 tigercodegen.ui: tigertree.uo tigerframe.ui tigerassem.uo 
 tigerframe.ui: tigertree.uo tigerassem.uo tigertemp.ui 
-tigermain.uo: tigerseman.ui tigerescap.ui tigergrm.ui tigerframe.ui \
-    tigerit.uo tigercanon.ui tigerinterp.uo tigerlex.uo tigertrans.ui \
-    tigerpp.uo 
+tigermain.uo: tigerseman.ui tigercodegen.ui tigerescap.ui tigergrm.ui \
+    tigerframe.ui tigerit.uo tigercanon.ui tigerassem.uo tigerinterp.uo \
+    tigerlex.uo tigertrans.ui tigerpp.uo 
 tigerlex.uo: tigergrm.ui tigernlin.uo 
 tigerpp.uo: tigerabs.uo 
 tigertab.uo: tigertab.ui 
@@ -101,5 +96,4 @@ tigerit.uo: tigertree.uo tigertab.ui
 tigerseman.uo: tigerseman.ui tigersres.uo tigertab.ui tigerpila.ui \
     tigertopsort.ui tigerabs.uo tigertrans.ui 
 tigermuestratipos.ui: tigertips.uo 
-tigertopsort.uo: tigertopsort.ui tigertab.ui tigertips.uo tigerabs.uo
- 
+tigertopsort.uo: tigertopsort.ui tigertab.ui tigertips.uo tigerabs.uo 

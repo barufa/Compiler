@@ -23,4 +23,9 @@ fun format mapRegister (OPER{assem,dst,src,jump}) = assem^" \n"
   | format mapRegister (MOVE{assem,dst,src}) = assem^" \n"
   | format _           _ = raise Fail "format: Caso no contemplado"
 
+fun formatCode (OPER{assem,dst,src,jump}) = "OPER: "^assem
+  | formatCode (LABEL{assem,...})         = "LABEL: "^assem^": "
+  | formatCode (MOVE{assem,dst,src})      = "MOVE: "^assem
+  | formatCode _                          = raise Fail "format: Caso no contemplado"
+
 end

@@ -3,6 +3,8 @@ open tigergrm
 open tigerescap
 open tigerseman
 open tigerframe
+open tigercodegen
+open tigerassem
 open BasicIO Nonstdio
 
 fun lexstream(is: instream) =
@@ -14,12 +16,12 @@ fun main(args) =
 	let	fun arg(l, s) =
 			(List.exists (fn x => x=s) l, List.filter (fn x => x<>s) l)
 		val (arbol, l1)		= arg(args, "-arbol")
-		val (escapes, l2)	= arg(l1, "-escapes") 
-		val (ir, l3)		= arg(l2, "-ir") 
-		val (canon, l4)		= arg(l3, "-canon") 
-		val (code, l5)		= arg(l4, "-code") 
-		val (flow, l6)		= arg(l5, "-flow") 
-		val (inter, l7)		= arg(l6, "-inter") 
+		val (escapes, l2)	= arg(l1, "-escapes")
+		val (ir, l3)		= arg(l2, "-ir")
+		val (canon, l4)		= arg(l3, "-canon")
+		val (code, l5)		= arg(l4, "-code")
+		val (flow, l6)		= arg(l5, "-flow")
+		val (inter, l7)		= arg(l6, "-inter")
 		val entrada =
 			case l7 of
 			[n] => ((open_in n)
@@ -29,7 +31,7 @@ fun main(args) =
 		val lexbuf = lexstream entrada
 		val expr = prog Tok lexbuf handle _ => errParsing lexbuf
 		val _ = findEscape(expr)
-		val _ = transProg(expr)		
+		val _ = transProg(expr)
 		val _ = if arbol then tigerpp.exprAst expr else ()
 		val lfrag = tigertrans.getResult()
 		fun funcanon(x) = if canon then tigercanon.traceSchedule(tigercanon.basicBlocks(tigercanon.linearize x))
@@ -41,12 +43,12 @@ fun main(args) =
 		   | split [] t s = (t,s)
 		val (proclist,stringlist) = split lfrag [] []
 		val _ = if code then
-							let 
+							let
 								val _ = List.map (fn (l,s) => print ("STRING: "^l^" \""^s^"\"\n")) stringlist
 								val _ = List.map (fn (b,f) => let val _ = print ("PROC: "^(tigerframe.name f)^" args: ")
 																									val _ = map (fn (InReg label) => print("TEMP "^label^"; ")
 																																| (InFrame k)=> print("MEM "^Int.toString(k)^"; ")) (tigerframe.formals f)
-																									val _ = print("\n") 
+																									val _ = print("\n")
 																									val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
 																							in 0 end) proclist
 							in () end
@@ -58,5 +60,3 @@ fun main(args) =
 	end	handle Fail s => print("Fail: "^s^"\n")
 
 val _ = main(CommandLine.arguments())
-
-
