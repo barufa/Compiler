@@ -18,13 +18,14 @@ datatype instr = IOPER of {assem: string,
  shows the register assignment of every temp
  Pagina 201
 *)
+
 fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
   | format mapRegister (ILABEL{assem,...}) = assem^": "
   | format mapRegister (IMOVE{assem,dst,src}) = assem^" \n"
   | format _           _ = raise Fail "format: Caso no contemplado"
 
-fun formatCode (IOPER{assem,dst,src,jump}) = print("OPER: "^assem^"\n")
-  | formatCode (ILABEL{assem,...})         = print("LABEL: "^assem^"\n")
+fun formatCode (IOPER{assem,src,dst,jump}) = print("OPER: "^assem^"\n")
+  | formatCode (ILABEL{assem,...})         = print(assem^"\n")
   | formatCode (IMOVE{assem,dst,src})      = print("MOVE: "^assem^"\n")
   | formatCode _                           = raise Fail "format: Caso no contemplado"
 
