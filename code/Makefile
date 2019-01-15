@@ -101,4 +101,5 @@ tigerit.uo: tigertree.uo tigertab.ui
 tigerseman.uo: tigerseman.ui tigersres.uo tigertab.ui tigerpila.ui \
     tigertopsort.ui tigerabs.uo tigertrans.ui 
 tigermuestratipos.ui: tigertips.uo 
-tigertopsort.uo: tigertopsort.ui tigertab.ui tigertips.uo tigerabs.uo 
+tigertopsort.uo: tigertopsort.ui tigertab.ui tigertips.uo tigerabs.uo
+ 
