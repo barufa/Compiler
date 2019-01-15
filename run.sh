@@ -11,7 +11,7 @@ nocolor='\033[0m'
 #Compilando
 cd code
 make clean
-make 
+make
 make clean
 cd ..
 mv $dir/code/tiger $dir/tiger

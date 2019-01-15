@@ -8,7 +8,8 @@ open tigertemp
 (* codegen: Pagina 206 *)
 fun codegen frame stm =
 let val ilist = ref ([]:instr list)
-		fun emit x = ilist := (x::(!ilist))
+		(* fun emit x = ilist := (x::(!ilist)) end *)
+		fun emit x = ilist := let val _ = (formatCode x) in (x::(!ilist)) end
 		fun result gen = let val t = tigertemp.newtemp() in (gen t; t) end
 		(* munchStm: Tree.stm -> Unit
      * Emits assembly to execute the given statement. *)
@@ -16,7 +17,7 @@ let val ilist = ref ([]:instr list)
     fun munchStm (MOVE (TEMP t1, e)) = (*COMPLETAR*)
 				emit (IMOVE{assem = "movq %'s0, %'d0", src=(munchExp e), dst=t1})
       | munchStm (MOVE (MEM e1, e2)) =
-				emit (IOPER{assem = "movq %'s0, (%'s1)", src=[munchExp e2,munchExp e1],dst=[],jump=NONE})
+				emit (IOPER{assem = "movq %'s0, %'s1", src=[munchExp e2,munchExp e1],dst=[],jump=NONE})
       | munchStm (EXP (CALL (NAME n, args))) = () (*COMPLETAR*)
       | munchStm (EXP (CALL _)) = ()(*COMPLETAR*)
       | munchStm (EXP e) = (munchExp e; ())

@@ -17,13 +17,14 @@ fun main(args) =
 			(List.exists (fn x => x=s) l, List.filter (fn x => x<>s) l)
 		val (arbol, l1)		= arg(args, "-arbol")
 		val (escapes, l2)	= arg(l1, "-escapes")
-		val (ir, l3)		= arg(l2, "-ir")
+		val (ir, l3)		  = arg(l2, "-ir")
 		val (canon, l4)		= arg(l3, "-canon")
 		val (code, l5)		= arg(l4, "-code")
 		val (flow, l6)		= arg(l5, "-flow")
 		val (inter, l7)		= arg(l6, "-inter")
+		val (assem, l8)		= arg(l7, "-assem")
 		val entrada =
-			case l7 of
+			case l8 of
 			[n] => ((open_in n)
 					handle _ => raise Fail (n^" no existe!"))
 			| [] => std_in
@@ -34,6 +35,7 @@ fun main(args) =
 		val _ = transProg(expr)
 		val _ = if arbol then tigerpp.exprAst expr else ()
 		val lfrag = tigertrans.getResult()
+		val _ = print("Iniciando\n")
 		fun funcanon(x) = if canon then tigercanon.traceSchedule(tigercanon.basicBlocks(tigercanon.linearize x))
 											else tigercanon.linearize x
 		fun split (l::ls) t s =
@@ -52,6 +54,9 @@ fun main(args) =
 																									val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
 																							in 0 end) proclist
 							in () end
+						else ()
+		val _ = print("Entro en assem\n")
+		val _ = if assem then let val _ = (List.map (fn (bl,f) => List.map (fn b => codegen f b) bl) proclist) in () end
 						else ()
 		val _ = if inter then tigerinterp.inter flow proclist stringlist
 						else ()

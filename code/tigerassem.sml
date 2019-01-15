@@ -23,9 +23,9 @@ fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
   | format mapRegister (IMOVE{assem,dst,src}) = assem^" \n"
   | format _           _ = raise Fail "format: Caso no contemplado"
 
-fun formatCode (IOPER{assem,dst,src,jump}) = "OPER: "^assem
-  | formatCode (ILABEL{assem,...})         = "LABEL: "^assem^": "
-  | formatCode (IMOVE{assem,dst,src})      = "MOVE: "^assem
+fun formatCode (IOPER{assem,dst,src,jump}) = print("OPER: "^assem^"\n")
+  | formatCode (ILABEL{assem,...})         = print("LABEL: "^assem^"\n")
+  | formatCode (IMOVE{assem,dst,src})      = print("MOVE: "^assem^"\n")
   | formatCode _                           = raise Fail "format: Caso no contemplado"
 
 end
