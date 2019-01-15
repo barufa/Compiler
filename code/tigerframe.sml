@@ -40,34 +40,20 @@ val ov  = "rdx"     (* overflow value *)
 val rax = "rax"
 val rdx = "rdx"
 
-val fpPrev = 0				(* offset (bytes) *)
-val fpPrevLev = ~WSz			(* offset (bytes) *)
-val wSz = 8				(* word size in bytes *)
-val log2WSz = 3				(* base two logarithm of word size in bytes *)
-val calldefs = [rv]
-val callersaves = []
-val calleesaves = []
+val fpPrev = 0				 (* offset (bytes) *)
+val wSz = 8				     (* word size in bytes *)
+val fpPrevLev = ~wSz	 (* offset (bytes) *)
+val log2WSz = 3				 (* base two logarithm of word size in bytes *)
 
+val localsInicial = 0	 (* words *)
+val localsGap = ~4 		 (* bytes *)
 
-val argsregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]
-
-val callersaves = ["r10", "r11"] (* registers that must be preserved by the caller *)
-val calleesaves = ["rbx", "r12", "r13", "r14", "r15"] (* registers that must be preserved by the callee *)
-val calldefs = [RV] @ argregs @ callersaves
-               (* registers possibly written by the callee *)
-val machineRegs = specialregs @ argregs @ callersaves @ calleesaves
-                  (* all registers available for coloring *)
-
-
-
-val localsInicial = 0			(* words *)
-val localsGap = ~4 			(* bytes *)
-val specialregs = [rv, fp, sp] (* special purpose registers *)
-val argregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"] (* registers for passing first args *)
-val callersaves = ["r10", "r11"] (* registers that must be preserved by the caller *)
-val calleesaves = ["rbx", "r12", "r13", "r14", "r15"] (* registers that must be preserved by the callee *)
-val calldefs = [rv] @ argregs @ callersaves (* registers possibly written by the callee *)
-val machineRegs = specialregs @ argregs @ callersaves @ calleesaves
+val specialregs = [rv, fp, sp]                                       (* special purpose registers *)
+val argsregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]              (* registers that hold arguments *)
+val callersaves = ["r10", "r11"]                                     (* registers that must be preserved by the caller *)
+val calleesaves = ["rbx", "r12", "r13", "r14", "r15"]                (* registers that must be preserved by the callee *)
+val calldefs    = [rv] @ argsregs @ callersaves                      (* registers possibly written by the callee *)
+val machineregs = specialregs @ argsregs @ callersaves @ calleesaves (* all registers available for coloring *)
 
 fun allocMem(k) = InFrame k
 
@@ -103,7 +89,8 @@ fun externalCall(s, l) = CALL(NAME s, l)
 fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
 
 fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
-	instr @ [tigerassem.OPER {assem = "",dst = [rv,sp,fp] @ caleesaves,src = [],jump = NONE}]
+	instr @ [tigerassem.OPER {assem = "",dst = [rv,sp,fp] @ calleesaves,src = [],jump = NONE}]
 
-(*fun procEntryExit3 (frame,body) = body (*COMPLETAR*)
-end*)
+(* fun procEntryExit3 (frame,body) = body (*COMPLETAR*) *)
+
+end

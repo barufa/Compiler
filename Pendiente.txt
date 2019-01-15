@@ -1,5 +1,0 @@
-Agregue el esqueleto las funciones de codegen, lo tendriamos que completar y verificar el pattern machine(ver en carpeta maximal munch)
-Estariamos en la parte de seleccion de instrucciones(capitulo 9). En esta parte tenemos que pasar el codigo intermedio a un assembler para la arquitectura 86x64 sin tener en cuenta los registros(el coloreo es el paso siguiente).
-La estructura del assembler que utilizariamos esta en el archivo tigerassem(es posible que lo tengamos que modificar)
-Para esta etapa es necesario el archivo tigerframe, pero no se si lo tenemos que volver a hacer o solo modificar el que ya existe.
-
