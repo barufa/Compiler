@@ -89,7 +89,7 @@ fun externalCall(s, l) = CALL(NAME s, l)
 fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
 
 fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
-	instr @ [tigerassem.OPER {assem = "",dst = [rv,sp,fp] @ calleesaves,src = [],jump = NONE}]
+	instr @ [tigerassem.IOPER {assem = "",dst = [rv,sp,fp] @ calleesaves,src = [],jump = NONE}]
 
 (* fun procEntryExit3 (frame,body) = body (*COMPLETAR*) *)
 
