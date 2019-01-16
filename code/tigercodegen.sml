@@ -8,12 +8,13 @@ open tigertemp
 (* codegen: Pagina 206 *)
 fun codegen frame stm =
 let val ilist = ref ([]:instr list)
-		(* fun emit x = ilist := (x::(!ilist)) end *)
+		fun result gen = let val t = tigertemp.newtemp() in (gen t; t) end
 		fun emit x = ilist := let val _ = (formatCode x) in (x::(!ilist)) end
 		fun emitM (ass,src,dst) = emit(IMOVE{assem = ass,src = src,dst = dst})
 		fun emitO (ass,src,dst,jmp) = emit(IOPER{assem=ass,src=src,dst=dst,jump=jmp})
 		fun emitL (lab) = emit(ILABEL {assem=lab^":", lab=lab})
-		fun result gen = let val t = tigertemp.newtemp() in (gen t; t) end
+		(* fun emit x = ilist := (x::(!ilist)) end *)
+
 		(* munchStm: Tree.stm -> Unit
      * Emits assembly to execute the given statement. *)
     (* Pagina 204 *)
@@ -22,31 +23,33 @@ let val ilist = ref ([]:instr list)
 					emitM("movq %'s0, %'d0",munchExp ex,t1)
       | munchStm (MOVE (MEM e1, e2)) =
 					emitO("movq %'s0, (%'s1)",[munchExp e2,munchExp e1],[],NONE)
-			| munchStm (EXP e) = (munchExp e; ())
 			| munchStm (LABEL l) = emitL(l)
       | munchStm (JUMP (NAME n, ln)) =
 					emitO ("jmp "^n,[],[],SOME ln)
       | munchStm (CJUMP (oper, e1, e2, l1, l2)) =
-				let val _ = emitO("cmpq %'s0, %'s1",[munchExp e1, munchExp e2],[],NONE)
-				in case oper of
-					  EQ => emitO("je 'j0",[],[],SOME [l1,l2])
-					| NE => emitO("jne 'j0",[],[],SOME [l1,l2])
-					| LT => emitO("jl 'j0",[],[],SOME [l1,l2])
-					| GT => emitO("jg 'j0",[],[],SOME [l1,l2])
-					| LE => emitO("jle 'j0",[],[],SOME [l1,l2])
-					| GE => emitO("jge 'j0",[],[],SOME [l1,l2])
-					| _  => raise Fail "Operacion erronea en jump condicional"
-				end
+					let val _ = emitO("cmpq %'s0, %'s1",[munchExp e1, munchExp e2],[],NONE)
+					in case oper of
+						  EQ => emitO("je 'j0",[],[],SOME [l1,l2])
+						| NE => emitO("jne 'j0",[],[],SOME [l1,l2])
+						| LT => emitO("jl 'j0",[],[],SOME [l1,l2])
+						| GT => emitO("jg 'j0",[],[],SOME [l1,l2])
+						| LE => emitO("jle 'j0",[],[],SOME [l1,l2])
+						| GE => emitO("jge 'j0",[],[],SOME [l1,l2])
+						| _  => raise Fail "Operacion erronea en jump condicional"
+					end
 			| munchStm (EXP (CALL (NAME n, args))) = (*COMPLETAR*)
-				emitO("call "^n,muchArgs args,calldefs,NONE)
+					emitO("call "^n,muchArgs args,calldefs,NONE)
+			| munchStm (EXP e) = (munchExp e; ())
 			| munchStm _ = raise Fail "Casos no cubiertos en tigercodegen.munchStm"
+
+
 		(* munchExp: Tree.exp -> Temp.temp
      * Emits assembly to evaluate the expression and returns the register where
      * the result is saved. *)
     (* Pagina 205 *)
     and munchExp (CONST n) =
 				result ( fn r => emitO("movq $"^(Int.toString n)^", %'d0",[],[r],NONE))
-      | munchExp (TEMP temp_reg) = temp_reg
+      | munchExp (TEMP t) = t
       | munchExp (BINOP (PLUS, e1, e2)) =
 				result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
 												 emitO("addq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
@@ -68,7 +71,11 @@ let val ilist = ref ([]:instr list)
 				result (fn r => emitO("movq (%'s0), %'d0",[munchExp e],[r],NONE))
       | munchExp (NAME n) =
 				result (fn r => emitO("movq "^n^" %'d0",[],[r],NONE))
+			| munchExp (CALL f) =
+				result (fn r => (munchStm(EXP(CALL f));emitM("movq %'s0, %'d0",rax,r)))
 			| munchExp exp = raise Fail "Casos no cubiertos en tigercodegen.munchExp"
+
+
 		(* munchArgs: Tree.exp list -> Temp.temp list
 	   * Push all the argument to the registers and the stack according to the
 	   * calling convention. *)

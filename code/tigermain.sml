@@ -35,7 +35,6 @@ fun main(args) =
 		val _ = transProg(expr)
 		val _ = if arbol then tigerpp.exprAst expr else ()
 		val lfrag = tigertrans.getResult()
-		val _ = print("Iniciando\n")
 		fun funcanon(x) = if canon then tigercanon.traceSchedule(tigercanon.basicBlocks(tigercanon.linearize x))
 											else tigercanon.linearize x
 		fun split (l::ls) t s =
@@ -51,12 +50,13 @@ fun main(args) =
 																									val _ = map (fn (InReg label) => print("TEMP "^label^"; ")
 																																| (InFrame k)=> print("MEM "^Int.toString(k)^"; ")) (tigerframe.formals f)
 																									val _ = print("\n")
-																									val _ = List.map (fn body => print (tigerit.tree body^"\n") ) b
+																									val _ = List.map (fn body => print(tigerit.tree body^"\n")) b
 																							in 0 end) proclist
 							in () end
 						else ()
-		val _ = print("Entro en assem\n")
-		val _ = if assem then let val _ = (List.map (fn (bl,f) => List.map (fn b => codegen f b) bl) proclist) in () end
+		val _ = if assem then let val _ = print("\n")
+															val _ = (List.map (fn (bl,f) => List.map (fn b => ((codegen f b);print("\n"))) bl) proclist)
+													in print("\n") end
 						else ()
 		val _ = if inter then tigerinterp.inter flow proclist stringlist
 						else ()
