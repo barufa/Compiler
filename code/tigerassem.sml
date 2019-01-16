@@ -20,9 +20,6 @@ datatype instr = IOPER of {assem: string,
 *)
 
 (* Para que muestre los registros temporarios*)
-
-
-
 (**********************************************)
 
 fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
