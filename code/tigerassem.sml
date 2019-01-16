@@ -20,6 +20,24 @@ datatype instr = IOPER of {assem: string,
 *)
 
 (* Para que muestre los registros temporarios*)
+
+fun stint2 (x::xs) ns =
+	if Char.isDigit x then stint2 xs (ns^Char.toCString(x))
+	else (valOf(Int.fromString(ns)),(x::xs))
+	| stint2 [] ns = (valOf(Int.fromString(ns)),[])
+
+fun stint ls = stint2 ls ""
+
+fun fillreg (x::xs) src dst jmp =
+		if x<>(#"'") then Char.toCString(x)^(fillreg xs src dst jmp)
+		else let val (n,ys) = stint(List.tl(xs))
+						 val ls = (case List.hd(xs) of
+														#"s" => src
+													| #"d" => dst
+													|  jl  => jmp)
+					in List.nth(ls,n)^(fillreg ys src dst jmp) end
+  | fillreg [] _ _ _ = ""
+
 (**********************************************)
 
 fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
@@ -27,9 +45,15 @@ fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
   | format mapRegister (IMOVE{assem,dst,src}) = assem^" \n"
   | format _           _ = raise Fail "format: Caso no contemplado"
 
-fun formatCode (IOPER{assem,src,dst,jump}) = print("OPER: "^assem^"\n")
-  | formatCode (ILABEL{assem,...})         = print(assem^"\n")
-  | formatCode (IMOVE{assem,dst,src})      = print("MOVE: "^assem^"\n")
+fun formatCode (IOPER{assem,src,dst,jump}) =
+			let val jmp = if jump = NONE then [] else valOf jump
+					val s = fillreg (String.explode assem) src dst jmp
+			in print(s^"\n") end
+  | formatCode (IMOVE{assem,src,dst})      =
+			let val s = fillreg (String.explode assem) [src] [dst] []
+			in print(s^"\n") end
+	| formatCode (ILABEL{assem,...})         =
+			print(assem^"\n")
   | formatCode _                           = raise Fail "format: Caso no contemplado"
 
 end
