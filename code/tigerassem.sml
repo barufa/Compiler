@@ -19,6 +19,12 @@ datatype instr = IOPER of {assem: string,
  Pagina 201
 *)
 
+(* Para que muestre los registros temporarios*)
+
+
+
+(**********************************************)
+
 fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
   | format mapRegister (ILABEL{assem,...}) = assem^": "
   | format mapRegister (IMOVE{assem,dst,src}) = assem^" \n"
