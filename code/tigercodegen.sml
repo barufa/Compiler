@@ -58,21 +58,21 @@ let val ilist = ref ([]:instr list)
 												 emitO("subq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
       | munchExp (BINOP (MUL, e1, e2)) = (*Revisar!!!!!!!!*)
 				result ( fn r =>
-					(emitM("movq %'s0, %'d0",munchExp e1,rax);
-					emitO("imulq %'s1",[rax, munchExp e2],[rax,rdx],NONE);
-					emitM("movq %'s0, %'d0",rax,r)))
+					(emitM("movq %'s0, %'d0",munchExp e1,rv);
+					emitO("imulq %'s1",[rv, munchExp e2],[rv,ov],NONE);
+					emitM("movq %'s0, %'d0",rv,r)))
       | munchExp (BINOP (DIV, e1, e2)) =
 				result ( fn r =>
-					 		(emitM("movq %'s0, %'d0",munchExp e1,rax);
-							emitO("cdqo",[rax],[rdx],NONE);
-							emitO("idivq %'s2",[rax,rdx,munchExp e2],[rax,rdx],NONE);
-							emitM("movq %'s0, %'d0",rax,r)))
+					 		(emitM("movq %'s0, %'d0",munchExp e1,rv);
+							emitO("cdqo",[rv],[ov],NONE);
+							emitO("idivq %'s2",[rv,ov,munchExp e2],[rv,ov],NONE);
+							emitM("movq %'s0, %'d0",rv,r)))
       | munchExp (MEM e) =
 				result (fn r => emitO("movq (%'s0), %'d0",[munchExp e],[r],NONE))
       | munchExp (NAME n) =
 				result (fn r => emitO("movq "^n^" %'d0",[],[r],NONE))
 			| munchExp (CALL f) =
-				result (fn r => (munchStm(EXP(CALL f));emitM("movq %'s0, %'d0",rax,r)))
+				result (fn r => (munchStm(EXP(CALL f));emitM("movq %'s0, %'d0",rv,r)))
 			| munchExp exp = raise Fail "Casos no cubiertos en tigercodegen.munchExp"
 
 

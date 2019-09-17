@@ -12,9 +12,9 @@ nocolor='\033[0m'
 cd code
 make clean
 make
+mv "$dir/code/tiger" "$dir/tiger"
 make clean
 cd ..
-mv $dir/code/tiger $dir/tiger
 clear
 
 #Corriendo Casos

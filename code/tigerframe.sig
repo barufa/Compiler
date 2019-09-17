@@ -13,8 +13,6 @@ val rv  : tigertemp.temp
 val ov  : tigertemp.temp
 val fp  : tigertemp.temp
 val sp  : tigertemp.temp
-val rax : tigertemp.temp
-val rdx : tigertemp.temp
 
 (* Algunas constantes utiles *)
 val fpPrev : int

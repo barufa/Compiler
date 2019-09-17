@@ -37,13 +37,16 @@ val rv = "rax"      (* return value  *)
 val fp = "rbp"      (* frame pointer *)
 val sp = "rsp"      (* stack pointer *)
 val ov  = "rdx"     (* overflow value *)
-val rax = "rax"
-val rdx = "rdx"
 
 val fpPrev = 0				 (* offset (bytes) *)
+val fpPrevLev = 16	         (* offset (bytes) *)
 val wSz = 8				     (* word size in bytes *)
-val fpPrevLev = ~wSz	 (* offset (bytes) *)
 val log2WSz = 3				 (* base two logarithm of word size in bytes *)
+(*
+val fpPrevLev = ~wSz	     (* offset (bytes) *)
+val wSz = 8				     (* word size in bytes *)
+val log2WSz = 3				 (* base two logarithm of word size in bytes *)
+*)
 
 val localsInicial = 0	 (* words *)
 val localsGap = ~4 		 (* bytes *)

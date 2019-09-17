@@ -43,7 +43,9 @@ fun fillreg (x::xs) src dst jmp =
 fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
   | format mapRegister (ILABEL{assem,...}) = assem^": "
   | format mapRegister (IMOVE{assem,dst,src}) = assem^" \n"
+(*
   | format _           _ = raise Fail "format: Caso no contemplado"
+*)
 
 fun formatCode (IOPER{assem,src,dst,jump}) =
 			let val jmp = if jump = NONE then [] else valOf jump
@@ -54,6 +56,8 @@ fun formatCode (IOPER{assem,src,dst,jump}) =
 			in print(s^"\n") end
 	| formatCode (ILABEL{assem,...})         =
 			print(assem^"\n")
+(*
   | formatCode _                           = raise Fail "format: Caso no contemplado"
+*)
 
 end
