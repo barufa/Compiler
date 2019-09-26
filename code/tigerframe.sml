@@ -51,12 +51,13 @@ val log2WSz = 3				 (* base two logarithm of word size in bytes *)
 val localsInicial = 0	 (* words *)
 val localsGap = ~4 		 (* bytes *)
 
-val specialregs = [rv, fp, sp]                                       (* special purpose registers *)
-val argsregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]              (* registers that hold arguments *)
-val callersaves = ["r10", "r11"]                                     (* registers that must be preserved by the caller *)
-val calleesaves = ["rbx", "r12", "r13", "r14", "r15"]                (* registers that must be preserved by the callee *)
-val calldefs    = [rv] @ argsregs @ callersaves                      (* registers possibly written by the callee *)
-val machineregs = specialregs @ argsregs @ callersaves @ calleesaves (* all registers available for coloring *)
+(* Revisar callersaves*)
+val specialregs = [rv, fp, sp]                                                    (* special purpose registers *)
+val argsregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]                           (* registers that hold arguments *)
+val callersaves = []                                                              (* registers that must be preserved by the caller *)
+val calleesaves = ["rbx", "rbp", "rsp", "r10", "r11", "r12", "r13", "r14", "r15"] (* registers that must be preserved by the callee *)
+val calldefs    = [rv] @ argsregs @ callersaves                                   (* registers possibly written by the callee *)
+val machineregs = specialregs @ argsregs @ callersaves @ calleesaves              (* all registers available for coloring *)
 
 fun allocMem(k) = InFrame k
 
@@ -94,6 +95,11 @@ fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
 fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
 	instr @ [tigerassem.IOPER {assem = "",dst = [rv,sp,fp] @ calleesaves,src = [],jump = NONE}]
 
-(* fun procEntryExit3 (frame,body) = body (*COMPLETAR*) *)
+fun procEntryExit3 (frame,body) =(*COMPLETAR*)
+{
+prolog = ".global "^name(frame)^"\n"^name(frame)^":\n"^"push "^fp^"\n"^"subq "^"$12345"(*Reemplazar con tamaño del frame*)^" "^fp,
+body = body,
+epilog = "movq "^fp^" "^sp^"\n"^"popq "^fp^"\n"^"ret"
+}
 
 end

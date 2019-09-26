@@ -39,6 +39,7 @@ val exp : access -> tigertree.exp -> tigertree.exp
 val externalCall : string * tigertree.exp list -> tigertree.exp
 val procEntryExit1 : frame * tigertree.stm -> tigertree.stm
 val procEntryExit2 : frame * tigerassem.instr list -> tigerassem.instr list
-(*val procEntryExit3*)
+
+val procEntryExit3 : frame * tigerassem.instr list -> {prolog:string, body: tigerassem.instr list, epilog: string}
 
 end
