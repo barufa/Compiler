@@ -5,8 +5,8 @@ exception graphEdge
 exception notExistNode
 exception notExistEdge
 
-type graph
 type node
+type graph
 
 val nodes: graph -> node list
 val succ: graph -> node -> node list (* Devuelve la lista de todos los sucesores del nodo *)
@@ -15,7 +15,7 @@ val adj: graph -> node -> node list
 val eq: node * node -> bool (* Devuelve true si ambos son el mismo nodo *)
 
 val newGraph: unit -> graph (* Crea un nuevo grafo vacio *)
-val newNode: graph -> node  (* Agrega un nuevo nodo al grafo *)
+val newNode: graph -> graph  (* Agrega un nuevo nodo al grafo *)
 
 val isNode: graph -> node -> bool
 val isEdge: graph -> {from: node, to: node} -> bool
