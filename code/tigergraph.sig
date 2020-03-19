@@ -5,7 +5,7 @@ exception graphEdge
 exception notExistNode
 exception notExistEdge
 
-type node
+type node = int
 type graph
 
 val nodes: graph -> node list

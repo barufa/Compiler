@@ -10,11 +10,7 @@ type node = int
 type graph = {maxNumNodes: int,
 							pred: (node ,node Splayset.set) Splaymap.dict,
 							succ: (node ,node Splayset.set) Splaymap.dict}
-(*
-fun nodes graph = List.map (#1 o Splaymap.listItems) (#succ graph)
 
-fun nodes graph = List.map (#1) (Splaymap.listItems (#succ graph))
-*)
 fun nodes ({succ,...}:graph) = List.map (#1) (Splaymap.listItems succ)
 
 fun succ ({succ,...}:graph) node = case Splaymap.peek(succ,node) of

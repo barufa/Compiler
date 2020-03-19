@@ -67,7 +67,7 @@ tigermain.uo: tigerseman.ui tigercodegen.ui tigerescap.ui tigergrm.ui \
     tigerlex.uo tigertrans.ui tigerpp.uo 
 tigerliveness.ui: tigerflow.ui 
 tigergraph.uo: tigergraph.ui 
-tigerflow.uo: tigerflow.ui tigertab.ui tigergraph.ui tigertemp.ui 
+tigerflow.uo: tigerflow.ui tigergraph.ui tigerassem.uo tigertemp.ui 
 tigerassem.uo: tigertemp.ui 
 tigercanon.ui: tigertree.uo tigertemp.ui 
 tigertab.uo: tigertab.ui 
