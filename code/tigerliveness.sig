@@ -3,8 +3,8 @@ sig
 
 type igraph
 
-val interferenceGraph: tigerflow.flowgraph -> igraph * (tigetflow. -> tigettemp.temp list)
+val interferenceGraph: tigerflow.flowgraph -> igraph * (tigergraph.node,tigertemp.temp Splayset.set) Splaymap.dict (* Devuelve el grafo de interferencia y un diccionario con cada nodo y sus temporarios que estan liveOut *)
 
-val shcw: outstream * igraph -> unit
+val show: igraph -> unit
 
 end

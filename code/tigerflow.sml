@@ -3,15 +3,15 @@ struct
 
 open tigerassem
 
-type flowgraph = {control: tigergraph.graph, (* Grafo dirigido donde cada nodo representa una instruccion *)
+type flowgraph = {control: tigergraph.graph,                               (* Grafo dirigido donde cada nodo representa una instruccion *)
 						     def: (tigergraph.node,tigertemp.temp list) Splaymap.dict, (* Tabla de temporarios definidos en cada nodo *)
 						     use: (tigergraph.node,tigertemp.temp list) Splaymap.dict, (* Tabla de temporarios usados en cada nodo *)
-						     ismove: (tigergraph.node,bool) Splaymap.dict} (* Indica si cada instruccion es una instruccion move, que podria eliminarse si def y use son iguales *)
+						     ismove: (tigergraph.node,bool) Splaymap.dict}             (* Indica si cada instruccion es una instruccion move, que podria eliminarse si def y use son iguales *)
 
 fun createFlowGraph instr =
   let
     (* Crea el grafo y agrega 1 nodo por cada elemento de la lista *)
-    fun addNodes instr = List.foldl (fn (i,g) => tigergraph.newNode g) (tigergraph.newGraph ()) instr
+    fun addNodes instr = List.foldl (fn (i,g) => #1 (tigergraph.newNode g)) (tigergraph.newGraph ()) instr
     (* Agrega las aristas segun el orden de las instrucciones sin tener en cuenta los JUMPs.
        Es decir, crea las aristas (1,2), (2,3), y asi sucesivamente. *)
     fun addEdge graph nodes = foldl (fn ((a,b),g) => tigergraph.mk_edge g {from=a,to=b}) graph (ListPair.zip(List.take(nodes,List.length nodes - 1),List.tl nodes))

@@ -95,11 +95,19 @@ fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
 fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
 	instr @ [tigerassem.IOPER {assem = "",dst = [rv,sp,fp] @ calleesaves,src = [],jump = NONE}]
 
-fun procEntryExit3 (frame,body) =(*COMPLETAR*)
-{
-prolog = ".global "^name(frame)^"\n"^name(frame)^":\n"^"push "^fp^"\n"^"subq "^"$12345"(*Reemplazar con tamaño del frame*)^" "^fp,
-body = body,
-epilog = "movq "^fp^" "^sp^"\n"^"popq "^fp^"\n"^"ret"
-}
+fun procEntryExit3 (frame,body) =(*COMPLETADO*)
+  let 
+    val tam = !(#actualLocal frame) * wSz 
+    val size = if tam mod 16 = 0 then tam else tam + wSz (*Tamaño del frame*)
+  in {prolog = ".global " ^ name(frame) ^ "\n" ^
+                 "\t" ^ name(frame) ^ ":\n" ^
+                 "\tpushq %rbp\n" ^
+                 "\tmovq %rsp, %rbp\n" ^
+                 "\tsubq $" ^ Int.toString(size) ^", %rbp\n\n",
+      body = body,
+      epilog = "\tmovq %rbp, %rsp\n" ^
+               "\tpopq %rbp\n" ^
+               "\tret\n\n"}
+  end
 
 end

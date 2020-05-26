@@ -28,9 +28,10 @@ fun newGraph () = {maxNumNodes = 0,
 									 succ = Splaymap.mkDict Int.compare}
 
 fun newNode ({maxNumNodes,pred,succ}:graph) =
-  {maxNumNodes = maxNumNodes + 1,
-  pred = Splaymap.insert(pred,maxNumNodes + 1,Splayset.empty Int.compare),
-	succ = Splaymap.insert(succ,maxNumNodes + 1,Splayset.empty Int.compare)}
+  ({maxNumNodes = maxNumNodes + 1,
+    pred = Splaymap.insert(pred,maxNumNodes + 1,Splayset.empty Int.compare),
+	  succ = Splaymap.insert(succ,maxNumNodes + 1,Splayset.empty Int.compare)},
+  maxNumNodes+1)
 
 fun isNode ({maxNumNodes,pred,succ}:graph) node =
   let 
