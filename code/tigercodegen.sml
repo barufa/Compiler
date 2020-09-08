@@ -16,8 +16,8 @@ let val ilist = ref ([]:instr list)
     (* munchStm: Tree.stm -> Unit
      * Emits assembly to execute the given statement. *)
     (* Pagina 204 *)
-    fun munchStm (MOVE (TEMP t, e1)) = emitM("movq %'s0, %'d0",munchExp e1,t)
-      | munchStm (MOVE (MEM e1, e2)) = emitO("movq %'s1, (%'s0)",[munchExp e1,munchExp e2],[],NONE)
+    fun munchStm (MOVE (TEMP t, e1)) = emitM("movq %'s0, %'d0# MOVE (TEMP t, e1)",munchExp e1,t)
+      | munchStm (MOVE (MEM e1, e2)) = emitO("movq %'s1, (%'s0)#MOVE (MEM e1, e2)",[munchExp e1,munchExp e2],[],NONE)
       | munchStm (EXP (CALL (NAME n, args))) = (emitO("xorq %'d0, %'d0 #cnt argumentos de punto flotante",[],[rv],NONE);
                                                 munchCall n args)
       | munchStm (EXP e) = (munchExp e; ())
@@ -66,14 +66,15 @@ let val ilist = ref ([]:instr list)
 	   * calling convention. *)
      and munchCall n args =
 		let (* Saco los argumentos de la pila para restaurar el estado de la misma *)
+            fun getLen xs = Int.toString(List.length args)
             val pop_list = ref ([]:instr list)
             fun emitP (ass,dst)  = (pop_list := (IOPER{assem=ass,src=[],dst=dst,jump=NONE}::(!pop_list)))
             fun emit_pops []     = ()
               | emit_pops (x::xs) = (emit(x);emit_pops(xs))
             (*Mueve los argumentos a la pila*)
             fun args2stack [] = []
-              | args2stack (x::args) = (emitO("pushq %'d0",[],[munchExp x],NONE);
-                                        emitP("popq %'d0",[result (fn r => munchExp(TEMP r))]);
+              | args2stack (x::args) = (emitO("pushq %'d0 # Pusheo "^(getLen args),[],[munchExp x],NONE);
+                                        emitP("popq %'d0 # Popeo "^(getLen args),[result (fn r => munchExp(TEMP r))]);
                                         args2stack(args))
             (*Mueve los argumentos a los registros*)
             fun args2regs [] _ = [](*Finaliza la funcion*)
@@ -81,7 +82,7 @@ let val ilist = ref ([]:instr list)
               | args2regs (x::args) (r::regs) =(*Mover x al registro r*)
 					let val _ = munchStm(MOVE (TEMP r, x)) in r ::(args2regs args regs) end
             val src_reg = args2regs args argsregs
-        in emitO("call "^n,src_reg,calldefs,NONE); emit_pops(rev(!pop_list)) end
+        in emitO("call "^n^"#EXP (CALL (NAME n, args))",src_reg,calldefs,NONE); emit_pops(!pop_list) end
 
 in munchStm stm; rev(!ilist) end
 
