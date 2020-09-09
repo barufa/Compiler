@@ -3,37 +3,43 @@ struct
 
 type allocation = (tigertemp.temp,tigerframe.register) Splaymap.dict
 
-fun color instr{interference,initial,spillCost,registers} =
+fun color (instr, frame) =
   let
     fun edgeCmp (t1,t2) (t3,t4) = if (String.compare(t1,t2) = EQUAL) then String.compare(t3,t4) else String.compare(t1,t2)
 
+    (*  *)
+    val interference: tigerliveness.igraph ref = ref ({graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]})
+    val liveOut: (tigergraph.node,tigertemp.temp Splayset.set) Splaymap.dict ref = ref (Splaymap.mkDict Int.compare)
+    val spillCost: (tigergraph.node,int) Splaymap.dict ref = ref (Splaymap.mkDict Int.compare)
+    val registers: tigerframe.register list = tigerframe.machineregs
+
     (* Estructuras de datos *)
-    val precolored: = ref ()
-    val initial: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
-    val simplifyWorklist: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
-    val freezeWorklist: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
-    val spillWorklist: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
-    val spilledNodes: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
-    val coalescedNodes: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
-    val coloredNodes: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
+    val precolored: tigerframe.register Splayset.set ref= ref (Splayset.addList(Splayset.empty String.compare,registers))
+    val initial: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
+    val simplifyWorklist: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
+    val freezeWorklist: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
+    val spillWorklist: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
+    val spilledNodes: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
+    val coalescedNodes: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
+    val coloredNodes: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
     val selectStack: tigertemp.temp tigerpila.Pila = tigerpila.nuevaPila()
       (* Se agrega esta estructura para poder calcular todos los elementos del stack *)
-    val selectStackSet: tigertemp.temp Splayset.set = ref (Splayset.empty String.compare)
+    val selectStackSet: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
 
-    val coalescedMoves: (tigertemp.temp * tigertemp.temp) Splayset.set = ref (Splayset.empty edgeCmp)
-    val constrainedMoves: (tigertemp.temp * tigertemp.temp) Splayset.set = ref (Splayset.empty edgeCmp)
-    val frozenMoves: (tigertemp.temp * tigertemp.temp) Splayset.set = ref (Splayset.empty edgeCmp)
-    val worklistMoves: (tigertemp.temp * tigertemp.temp) Splayset.set = ref (Splayset.empty edgeCmp)
-    val activeMoves: (tigertemp.temp * tigertemp.temp) Splayset.set = ref (Splayset.empty edgeCmp)
+    val coalescedMoves: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
+    val constrainedMoves: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
+    val frozenMoves: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
+    val worklistMoves: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
+    val activeMoves: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
 
-    val adjSet: tigertemp.temp * tigertemp.temp Splayset.set = ref (Splayset.empty edgeCmp)
-    val adjList: (tigertemp.temp,tigertemp.temp Splayset.set) Splaymap.dict = ref (Splaymap.mkDict String.compare)
-    val degree: (tigertemp.temp,int) Splaymap.dict = ref (Splaymap.mkDict String.compare)
-    val moveList: (tigertemp.temp,(tigertemp.temp * tigertemp.temp) Splayset.set) Splaymap.dict = ref (Splaymap.mkDict String.compare)
-    val alias: (tigertemp.temp,tigertemp.temp) Splaymap.dict = ref (Splaymap.mkDict String.compare)
-    val color : (tigertemp.temp,tigerframe.register) Splaymap dict = ref (Splaymap.mkDict String.compare)
+    val adjSet: tigertemp.temp * tigertemp.temp Splayset.set ref = ref (Splayset.empty edgeCmp)
+    val adjList: (tigertemp.temp,tigertemp.temp Splayset.set) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
+    val degree: (tigertemp.temp,int) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
+    val moveList: (tigertemp.temp,(tigertemp.temp * tigertemp.temp) Splayset.set) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
+    val alias: (tigertemp.temp,tigertemp.temp) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
+    val color : (tigertemp.temp,tigerframe.register) Splaymap dict ref = ref (Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) !precolored)
 
-    val K: int = Splayset.numItems precolored
+    val K: int = Splayset.numItems !precolored
 
     (* Funciones *)
       (* Funciones auxiliares*)
@@ -55,6 +61,10 @@ fun color instr{interference,initial,spillCost,registers} =
       let
         val n = tigerpila.topPila selectStack
       in tigerpila.popPila selectStack;selectStackSet := Splayset.delete(!selectStackSet,n);n end 
+
+    fun EmptySelectStack = 
+      while(tigerpila.lenPila selectStack > 0)
+      do(tigerpila.popPila selectStack)
 
     fun getItem set = case (Splayset.find (fn _ => true) set) of
                         SOME n => n
@@ -79,7 +89,39 @@ fun color instr{interference,initial,spillCost,registers} =
             else ())
       else ()
 
-    fun Build () =
+    fun Build instrs
+      let
+        val live = ref (Splaymap.fold (fn (key,value,set) => Splayset.union(value,set)) (Splayset.empty String.compare) !liveOut)
+        fun getDst inst = case inst of
+                             IOPER {assem,dst,src,jump} => Splayset.addList(Splayset.empty String.compare,dst)
+                           | IMOVE {assem,dst,src} => Splayset.add(Splayset.empty String.compare,dst)
+                           | _ => Splayset.empty String.compare
+        fun getSrc inst = case inst of
+                             IOPER {assem,dst,src,jump} => Splayset.addList(Splayset.empty String.compare,src)
+                           | IMOVE {assem,dst,src} => Splayset.add(Splayset.empty String.compare,src)
+                           | _ => Splayset.empty String.compare
+        fun isMove inst = case inst of
+                             IMOVE {...} => true
+                           | _ => false
+        fun aux ILABEL{...} = ()
+        | aux inst =
+          let
+            val def_I = getDst inst
+            val use_I = getSrc inst
+          in
+            if (isMove inst) (* Si es una instruccion move, def_I y use_I tienen un solo elemento *)
+            then (live := Splayset.difference(!live,use_I);
+                  moveList := Splaymap.insert(!moveList,getItem def_I,Splayset.add(GetMoveList def_I,(getItem def_I,getItem use_I)));
+                  moveList := Splaymap.insert(!moveList,getItem use_I,Splayset.add(GetMoveList use_I,(getItem def_I,getItem use_I)));
+                  worklistMoves := Splayset.add(!worklistMoves,(getItem def_I,getItem use_I));
+                 );
+            live := Splayset.union(!live,def_I);
+            Splayset.app (fn d => Splayset.app (fn l => AddEdge(l, d)) !live) def_I;
+            live := Splayset.union(use_I,Splayset.difference(!live,def_I))
+          end
+      in
+        List.app (fn i => aux i) (List.rev instrs)
+      end
 
     fun NodeMoves n = Splayset.intersection(GetMoveList n,Splayset.union(!activeMoves,!worklistMoves))
 
@@ -219,10 +261,126 @@ fun color instr{interference,initial,spillCost,registers} =
           end);
       Splayset.app (fn n => color := Splaymap.insert(!color,n,GetColor(GetAlias(n)))) !coalescedNodes
 
-    fun RewriteProgram () =
+    fun RewriteProgram instrs =
+
+    fun LivenessAnalysis instrs =
+      let
+        val (fgraph,nodes) = tigerflow.instr2graph instrs
+        val (ig,lo) = tigerliveness.interferenceGraph fgraph
+        val {control, def, use, ismove} = fgraph
+      in 
+        interference := ig;
+        liveOut := lo;
+        (* Inicializamos initial con todos los temporales*)
+        List.app (fn n => List.app (fn t => initial := Splayset.add(!initial,t)) (Splaymap.find(def,n) @ Splaymap.find(use,n))) nodes;
+        (* Eliminamos de initial los temporales precoloreados *)
+        Splayset.app (fn t => initial := Splayset.delete(!initial,t)) !precolored
+      end
+
+    (* Init inicializa todas la variables para cuando se vuelva a llamar main
+    despues de reescribir el programa estas esten igual que como se llamo a
+    la funcion color *)
+    fun Init () =
+      (* interference := {graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]} *)
+      liveOut := Splaymap.mkDict Int.compare;
+      spillCost := Splaymap.mkDict Int.compare;
+      (* registers: tigerframe.register list = tigerframe.machineregs; *)
+      (* precolored := Splayset.addList(Splayset.empty String.compare,registers); *)
+      initial := Splayset.empty String.compare;
+      simplifyWorklist := Splayset.empty String.compare;
+      freezeWorklist := Splayset.empty String.compare;
+      spillWorklist := Splayset.empty String.compare;
+      spilledNodes := Splayset.empty String.compare;
+      coalescedNodes := Splayset.empty String.compare;
+      coloredNodes := Splayset.empty String.compare;
+      (* Vacio la pila en vez de crear una nueva vacia *)
+      EmptySelectStack();
+      selectStackSet := Splayset.empty String.compare;
+      coalescedMoves := Splayset.empty edgeCmp;
+      constrainedMoves := Splayset.empty edgeCmp;
+      frozenMoves := Splayset.empty edgeCmp;
+      worklistMoves := Splayset.empty edgeCmp;
+      activeMoves := Splayset.empty edgeCmp;
+      adjSet := Splayset.empty edgeCmp;
+      adjList := Splaymap.mkDict String.compare;
+      degree := Splaymap.mkDict String.compare;
+      moveList := Splaymap.mkDict String.compare;
+      alias := Splaymap.mkDict String.compare;
+      color := Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) !precolored
+      (* K: int = Splayset.numItems !precolored *)
+
+    fun Main instrs = 
+      let
+        Init();
+        LivenessAnalysis instrs;
+        Build instrs;
+        MakeWorklist();
+        while ((not Splayset.isempty !simplifyWorklist) orelse (not Splayset.isempty !worklistMoves) orelse
+               (not Splayset.isempty  !freezeWorklist) orelse (not Splayset.isempty !spillWorklist))
+        do (if (not Splayset.isempty !simplifyWorklist) then Simplify()
+            else if (not Splayset.isempty !worklistMoves) then Coalesce()
+            else if (not Splayset.isempty !freezeWorklist) then Freeze()
+            else if (not Splayset.isempty !spillWorklist) then SelectSpill()
+           );
+        AssignColors();
+        if (not Splayset.isempty !spilledNodes)
+        then Main(RewriteProgram instrs)
+      in
+        ()
+      end
 
   in
+    Main instr;
+  end
+end
+
+(* Alternativa *)
+(*
+  in
     (* Funcion color *)
+    LivenessAnalysis();
+    Build();
+    MakeWorklist;
+    while ((not Splayset.isempty !simplifyWorklist) orelse (not Splayset.isempty !worklistMoves) orelse
+           (not Splayset.isempty  !freezeWorklist) orelse (not Splayset.isempty !spillWorklist))
+    do (if (not Splayset.isempty !simplifyWorklist) then Simplify()
+        else if (not Splayset.isempty !worklistMoves) then Coalesce()
+        else if (not Splayset.isempty !freezeWorklist) then Freeze()
+        else if (not Splayset.isempty !spillWorklist) then SelectSpill()
+       );
+    AssignColors();
+    if (not Splayset.isempty !spilledNodes)
+    then color(RewriteProgram(),frame)
   end
 
 end
+*)
+(* Alternativa *)
+(*
+    fun Main instr = 
+      let
+        Init();   (* Init inicializa todas la variables para cuando se vuelva a llamar main
+                   despues de reescribir el programa estas esten igual que como se llamo a
+                   la funcion color *)
+        LivenessAnalysis instr;
+        Build();
+        MakeWorklist;
+        while ((not Splayset.isempty !simplifyWorklist) orelse (not Splayset.isempty !worklistMoves) orelse
+               (not Splayset.isempty  !freezeWorklist) orelse (not Splayset.isempty !spillWorklist))
+        do (if (not Splayset.isempty !simplifyWorklist) then Simplify()
+            else if (not Splayset.isempty !worklistMoves) then Coalesce()
+            else if (not Splayset.isempty !freezeWorklist) then Freeze()
+            else if (not Splayset.isempty !spillWorklist) then SelectSpill()
+           );
+        AssignColors();
+        if (not Splayset.isempty !spilledNodes)
+        then Main(RewriteProgram())
+      in
+        ()
+      end
+
+  in
+    Main instr;
+  end
+end
+*)
