@@ -10,4 +10,6 @@ type flowgraph = {control: tigergraph.graph,                               (* Gr
 
 val instr2graph: tigerassem.instr list -> flowgraph * tigergraph.node list (* Toma una lista de instrucciones y devuelve un grafo de flujo *)
 
+val debug: flowgraph * tigergraph.node list -> unit
+
 end

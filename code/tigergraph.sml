@@ -7,6 +7,16 @@ exception notExistEdge
 
 type node = int
 
+val table = ref (Splaymap.mkDict Int.compare)
+
+fun createTable () = table := Splaymap.mkDict Int.compare
+
+fun mapNode n v = table := Splaymap.insert(!table,n,v)
+
+fun valNode n = case Splaymap.peek(!table,n) of
+                 SOME v => v
+                 | NONE => raise Fail "No se encontro el nodo: 21354\n"
+
 type graph = {maxNumNodes: int,
 							pred: (node ,node Splayset.set) Splaymap.dict,
 							succ: (node ,node Splayset.set) Splaymap.dict}
@@ -23,14 +33,16 @@ fun pred ({pred,...}:graph) node = case Splaymap.peek(pred,node) of
 
 fun eq (node1,node2) = node1 = node2
 
+(* Inicializo la tabla que mapea nodos con lo que representa y luego creo el grafo *)
 fun newGraph () = {maxNumNodes = 0,
-									 pred = Splaymap.mkDict Int.compare,
-									 succ = Splaymap.mkDict Int.compare}
+		               pred = Splaymap.mkDict Int.compare,
+		               succ = Splaymap.mkDict Int.compare}
 
+(* Mapeo el nuevo nodo con lo que representa en la tabla y luego lo agrego al grafo *)
 fun newNode ({maxNumNodes,pred,succ}:graph) =
   ({maxNumNodes = maxNumNodes + 1,
-    pred = Splaymap.insert(pred,maxNumNodes + 1,Splayset.empty Int.compare),
-	  succ = Splaymap.insert(succ,maxNumNodes + 1,Splayset.empty Int.compare)},
+   pred = Splaymap.insert(pred,maxNumNodes + 1,Splayset.empty Int.compare),
+   succ = Splaymap.insert(succ,maxNumNodes + 1,Splayset.empty Int.compare)},
   maxNumNodes+1)
 
 fun isNode ({maxNumNodes,pred,succ}:graph) node =
@@ -73,5 +85,26 @@ fun rm_edge (g as {maxNumNodes,pred,succ}:graph) {from, to} =
        succ = Splaymap.insert(succ,from,Splayset.delete(Splaymap.find(succ,from),to))}
 
 fun nodename node = Int.toString node
+
+fun debug g =
+  let
+    fun infoNode n =
+      let
+        val _ = print("Nodo "^nodename n^":\n")
+        val _ = print("  ")
+        val _ = tigerassem.formatCode (valNode n)
+        fun f a = print(nodename a^",")
+        val _ = print("  ")
+        val _ = List.app f (succ g n)
+        val _ = print("\n")
+        val _ = print("  ")
+        val _ = List.app f (pred g n)
+        val _ = print("\n")
+      in () end
+    val _ = print("La informacion se mostrara de la siguiente manera\n")
+    val _ = print("-Nodo\n  -Instruccion\n  -Succesores\n  -Predecesores\n\n")
+  in
+    List.app infoNode (nodes g)
+  end
 
 end
