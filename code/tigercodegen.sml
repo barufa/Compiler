@@ -9,7 +9,7 @@ open tigertemp
 fun codegen frame stm =
 let val ilist = ref ([]:instr list)
 	fun result gen = let val t = tigertemp.newtemp() in (gen t; t) end
-	fun emit x = ilist := let val _ = (formatCode x) in (x::(!ilist)) end
+	fun emit x = ilist := (x::(!ilist))
 	fun emitM (ass,src,dst) = emit(IMOVE{assem = ass,src = src,dst = dst})
 	fun emitO (ass,src,dst,jmp) = emit(IOPER{assem=ass,src=src,dst=dst,jump=jmp})
 	fun emitL (lab) = emit(ILABEL {assem=lab^":", lab=lab})
@@ -64,10 +64,10 @@ let val ilist = ref ([]:instr list)
 	  (* munchCall: Tree.exp list -> unit
 	   * Push all the argument to the registers and the stack according to the
 	   * calling convention. *)
-     and munchCall n args =
+     and munchCall n argss =
 		let (* Saco los argumentos de la pila para restaurar el estado de la misma *)
-            fun getLen xs = Int.toString(List.length args)
             val pop_list = ref ([]:instr list)
+            fun getLen xs = Int.toString(List.length xs)
             fun emitP (ass,dst)  = (pop_list := (IOPER{assem=ass,src=[],dst=dst,jump=NONE}::(!pop_list)))
             fun emit_pops []     = ()
               | emit_pops (x::xs) = (emit(x);emit_pops(xs))
@@ -79,10 +79,9 @@ let val ilist = ref ([]:instr list)
             (*Mueve los argumentos a los registros*)
             fun args2regs [] _ = [](*Finaliza la funcion*)
               | args2regs args [] = args2stack(rev(args))(*ya use los 6 regitros para argumentos*)
-              | args2regs (x::args) (r::regs) =(*Mover x al registro r*)
-					let val _ = munchStm(MOVE (TEMP r, x)) in r ::(args2regs args regs) end
-            val src_reg = args2regs args argsregs
-        in emitO("call "^n^"#EXP (CALL (NAME n, args))",src_reg,calldefs,NONE); emit_pops(!pop_list) end
+              | args2regs (x::args) (r::regs) = let val _ = munchStm(MOVE (TEMP r, x)) in r ::(args2regs args regs) end
+            val src_reg = args2regs argss argsregs
+        in emitO("call "^n^" #EXP (CALL (NAME n, args))",src_reg,calldefs,NONE); emit_pops(!pop_list) end
 
 in munchStm stm; rev(!ilist) end
 

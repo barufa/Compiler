@@ -55,9 +55,10 @@ fun main(args) =
 																							in 0 end) proclist
 							in () end
 						else ()
-		val _ = if assem then let val _ = print("\n")
-															val _ = (List.map (fn (bl,f) => List.map (fn b => ((codegen f b);print("\n"))) bl) proclist)
-													in print("\n") end
+		val _ = if assem then let val _ = print("#Arrancamo\n")
+					              val instr_l = List.map (fn (bl,f) => List.map (fn b => codegen f b) bl) proclist
+                                  val _ = List.map (fn x => List.map (fn y => (List.map (fn i => (formatCode i)) y;print("########\n"))) x) instr_l
+							  in print("#Terminamo\n") end
 						else ()
 		val _ = if inter then tigerinterp.inter flow proclist stringlist
 						else ()
