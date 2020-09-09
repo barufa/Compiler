@@ -60,13 +60,13 @@ fun formatCode (IOPER{assem,src,dst,jump}) =
   | formatCode _                           = raise Fail "format: Caso no contemplado"
 *)
 
-fun showCode (ILABEL{assem,...}) = (assem^"\n")
+fun showCode (ILABEL{assem,...}) = assem
   | showCode (IOPER{assem,src,dst,jump}) =
     		let val jmp = if jump = NONE then [] else valOf jump
 				val s = fillreg (String.explode assem) src dst jmp
-			in (s^"\n") end
+			in s end
   | showCode (IMOVE{assem,src,dst}) =
 			let val s = fillreg (String.explode assem) [src] [dst] []
-			in (s^"\n") end
+			in s end
 
 end

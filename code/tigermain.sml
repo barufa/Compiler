@@ -36,10 +36,10 @@ fun main(args) =
 		val _ = if arbol then tigerpp.exprAst expr else ()
 		val lfrag = tigertrans.getResult()
 		fun funcanon(x) = if canon then tigercanon.traceSchedule(tigercanon.basicBlocks(tigercanon.linearize x))
-											else tigercanon.linearize x
+								   else tigercanon.linearize x
 		fun split (l::ls) t s =
 			(case l of
-			 tigerframe.PROC {body,frame} => split ls (t@[(funcanon body,frame)]) s
+			   tigerframe.PROC {body,frame} => split ls (t@[(funcanon body,frame)]) s
 			 | tigerframe.STRING x => split ls t (s@[x]))
 		   | split [] t s = (t,s)
 		val (proclist,stringlist) = split lfrag [] []
@@ -47,19 +47,30 @@ fun main(args) =
 							let
 								val _ = List.map (fn (l,s) => print ("STRING: "^l^" \""^s^"\"\n")) stringlist
 								val _ = List.map (fn (b,f) => let val _ = print ("PROC: "^(tigerframe.name f)^" args: ")
-																									val _ = map (fn (InReg label) => print("TEMP "^label^"; ")
-																																| (InFrame k)=> print("MEM "^Int.toString(k)^"; ")) (tigerframe.formals f)
-																									val _ = print("\n")
-																									val _ = List.map (fn body => (print(tigerit.tree body);
-																																								(codegen f body);print("\n"))) b
-																							in 0 end) proclist
+																  val _ = map (fn (InReg label) => print("TEMP "^label^"; ")
+																                | (InFrame k)=> print("MEM "^Int.toString(k)^"; ")) (tigerframe.formals f)
+																  val _ = print("\n")
+																  val _ = List.map (fn body => (print(tigerit.tree body);(codegen f body);print("\n"))) b
+															  in 0 end) proclist
 							in () end
 						else ()
-		val _ = if assem then let val _ = print("#Arrancamo\n")
-					              val instr_l = List.map (fn (bl,f) => List.map (fn b => codegen f b) bl) proclist
-                                  val _ = List.map (fn x => List.map (fn y => (List.map (fn i => (formatCode i)) y;print("########\n"))) x) instr_l
-							  in print("#Terminamo\n") end
-						else ()
+        val _ = if assem then let fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs
+                                  fun escape s = List.foldr (fn (x, acc) => case x of
+                                                                             #"\n" => "\\n"^acc
+                                                                            |  _  => String.str(x)^acc) "" (String.explode s)
+                                  val _ = print("##START##\n")
+                                  val _ = print("\n.data\n")
+                                  val _ = List.map (fn (l,s) => print(l^": .ascaiz \""^(escape s)^"\"\n")) stringlist
+                                  val _ = print("\n.text\n")
+					              val proc_l = List.map (fn (bl,f) => let val il = List.map (fn b => codegen f b) bl in (procEntryExit3(f,flat il)) end) proclist
+                                  val _ = List.map (fn proc => let val _ = print(#prolog proc)
+                                                                   val instrlist = (List.map showCode (#body proc)) @ ["\n\n"]
+                                                                   val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
+                                                                   val _ = print(instructions)
+                                                                   val _ = print(#epilog proc)
+                                                                in () end) proc_l
+							  in print("##FINISH##\n") end
+				else ()
 		val _ = if inter then tigerinterp.inter flow proclist stringlist
 						else ()
 	in

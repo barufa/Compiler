@@ -16,8 +16,8 @@ let val ilist = ref ([]:instr list)
     (* munchStm: Tree.stm -> Unit
      * Emits assembly to execute the given statement. *)
     (* Pagina 204 *)
-    fun munchStm (MOVE (TEMP t, e1)) = emitM("movq %'s0, %'d0# MOVE (TEMP t, e1)",munchExp e1,t)
-      | munchStm (MOVE (MEM e1, e2)) = emitO("movq %'s1, (%'s0)#MOVE (MEM e1, e2)",[munchExp e1,munchExp e2],[],NONE)
+    fun munchStm (MOVE (TEMP t, e1)) = emitM("movq %'s0, %'d0",munchExp e1,t)
+      | munchStm (MOVE (MEM e1, e2)) = emitO("movq %'s1, (%'s0)",[munchExp e1,munchExp e2],[],NONE)
       | munchStm (EXP (CALL (NAME n, args))) = (emitO("xorq %'d0, %'d0 #cnt argumentos de punto flotante",[],[rv],NONE);
                                                 munchCall n args)
       | munchStm (EXP e) = (munchExp e; ())
@@ -42,7 +42,7 @@ let val ilist = ref ([]:instr list)
      * the result is saved. *)
     (* Pagina 205 *)
     and munchExp (CONST n) = result ( fn r => emitO("movq $"^(Int.toString n)^", %'d0",[],[r],NONE))
-      | munchExp (NAME n) = result (fn r => emitO("movq "^n^" %'d0",[],[r],NONE))
+      | munchExp (NAME n) = result (fn r => emitO("movq "^n^", %'d0",[],[r],NONE))
       | munchExp (TEMP t) = t
       | munchExp (BINOP (PLUS, e1, e2)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
                                                             emitO("addq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
@@ -81,7 +81,7 @@ let val ilist = ref ([]:instr list)
               | args2regs args [] = args2stack(rev(args))(*ya use los 6 regitros para argumentos*)
               | args2regs (x::args) (r::regs) = let val _ = munchStm(MOVE (TEMP r, x)) in r ::(args2regs args regs) end
             val src_reg = args2regs argss argsregs
-        in emitO("call "^n^" #EXP (CALL (NAME n, args))",src_reg,calldefs,NONE); emit_pops(!pop_list) end
+        in emitO("call "^n,src_reg,calldefs,NONE); emit_pops(!pop_list) end
 
 in munchStm stm; rev(!ilist) end
 
