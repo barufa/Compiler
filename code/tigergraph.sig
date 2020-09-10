@@ -33,6 +33,12 @@ val valNode: node -> tigerassem.instr          (* Devuelve el valor que tiene ma
 
 val nodename: node -> string (* for debugging*)
 
-val debug: graph -> unit
+(* Funciones de debug *)
+(* Imprime el grafo *)
+val debugGraph: graph -> unit
+(* Imprime la informacion que corresponde con cada nodo del grafo.
+   Esta funcion la usamos para ver a que instruccion corresponde cada nodo
+   del grafo de flujo *)
+val debugTable: graph -> unit
 
 end

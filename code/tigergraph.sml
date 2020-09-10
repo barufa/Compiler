@@ -86,25 +86,38 @@ fun rm_edge (g as {maxNumNodes,pred,succ}:graph) {from, to} =
 
 fun nodename node = Int.toString node
 
-fun debug g =
+fun debugGraph g =
   let
+    val _ = print("Imprimiendo informacion del grafo\n")
     fun infoNode n =
       let
-        val _ = print("Nodo "^nodename n^":\n")
-        val _ = print("  ")
-        val _ = tigerassem.formatCode (valNode n)
+        val _ = print("  -Nodo "^nodename n^":\n")
         fun f a = print(nodename a^",")
-        val _ = print("  ")
-        val _ = List.app f (succ g n)
-        val _ = print("\n")
-        val _ = print("  ")
+        val _ = print("    -Pred: ")
         val _ = List.app f (pred g n)
         val _ = print("\n")
+        val _ = print("    -Succ: ")
+        val _ = List.app f (succ g n)
+        val _ = print("\n")
       in () end
-    val _ = print("La informacion se mostrara de la siguiente manera\n")
-    val _ = print("-Nodo\n  -Instruccion\n  -Succesores\n  -Predecesores\n\n")
+    val _ = print("La informacion se mostrara de la siguiente manera:\n")
+    val _ = print("-Nodo\n  -Predecesores\n  -Sucesores\n\n")
   in
     List.app infoNode (nodes g)
+  end
+
+fun debugTable g =
+  let
+    val _ = print("Imprimiendo informacion de la tabla\n")
+    fun infoTable n =
+      let
+        val _ = print("  Nodo "^nodename n^": ")
+        val _ = tigerassem.formatCode (valNode n)
+      in () end
+    val _ = print("La informacion se mostrara de la siguiente manera:\n")
+    val _ = print("-Nodo: Instruccion\n\n")
+  in
+    List.app infoTable (nodes g)
   end
 
 end

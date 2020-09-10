@@ -1,0 +1,76 @@
+(* Esto no es un script(aunque se podria hacerlo). Es para copiar en la terminal *)
+(* Eliminamos los archivos compilados y volvemos a compilar *)
+make clean
+make
+(* Abrimos mosml *)
+mosml
+(* Cargamos los archivos *)
+load "tigertemp";
+load "tigerassem";
+load "tigergraph";
+load "tigerflow";
+load "tigerliveness";
+load "String";
+load "Splaymap";
+load "Int";
+
+(* Probando tigerGraph *)
+(* Creo el grafo *)
+val graph = tigergraph.newGraph();
+(* Agrego 9 nodos *)
+val graph = List.foldl (fn (_,g) => #1 (tigergraph.newNode g)) graph [1,2,3,4,5,6,7,8,9];
+(* Creo las aristas para agregar *)
+val addEdges = [{from=1, to=2},{from=2, to=3},{from=3, to=4},{from=4, to=5},{from=5, to=6},{from=6, to=7},{from=7, to=8},{from=8, to=9}];
+(* Agrego las aristas que cree anteriormente *)
+val graph = List.foldl (fn (e,g) => tigergraph.mk_edge g e) graph addEdges;
+(* Creo las aristas para eliminar *)
+val deleteEdges = [{from=2, to=3},{from=4, to=5},{from=6, to=7},{from=8, to=9}];
+(* Elimino las aristas que cree anteriormente *)
+val graph = List.foldl (fn (e,g) => tigergraph.rm_edge g e) graph deleteEdges;
+(* Imprimo el grafo *)
+val _ = tigergraph.debugGraph graph;
+
+(* Probando tigerFlow *)
+val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=[],jump=NONE},           (* c <- 2 *)
+              tigerassem.IOPER{assem="movq $0, %'d0",dst=["a"],src=[],jump=NONE},           (* a <- 0 *)
+              tigerassem.ILABEL{assem="L1:",lab="L1"},                                      (* L1: *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="b",src="a"},                    (* b <- a *)
+              tigerassem.IOPER{assem="addq $1, %'d0",dst=["b"],src=["b"],jump=NONE},        (* b <- b + 1 *)
+              tigerassem.IOPER{assem="addq %'s1, %'d0",dst=["c"],src=["c","b"],jump=NONE},  (* c <- c + b *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="a",src="b"},                    (* a <- b *)
+              tigerassem.IOPER{assem="mulq $2, %'d0",dst=["a"],src=["a"],jump=NONE},        (* a <- a * 2 *)
+              tigerassem.IOPER{assem="cmpq %'s0, $5",dst=[],src=["a"],jump=NONE},           (* if a < 5 goto L1 *)
+              tigerassem.IOPER{assem="jg 'j0",dst=[],src=[],jump=SOME ["L1","L2"]},
+              tigerassem.ILABEL{assem="L2:",lab="L2"},                                      (* L2: *)
+              tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="c"}                       (* d <- c *)
+             ];
+
+val (fgraph,nodes) = tigerflow.instr2graph instrs;
+val _ = tigerflow.debug (fgraph,nodes);
+
+(* Probando funciones de debug de tigerLiveness *)
+(* Creamos un nuevo grafo *)
+val g = tigergraph.newGraph();
+val g = List.foldl (fn (_,grafo) => #1 (tigergraph.newNode grafo)) g [1,2,3,4,5,6,7];
+(* Creamos los diccionarios que mapean nodos a temporarios y viceversa *)
+val t_TO_n = Splaymap.mkDict String.compare;
+val n_TO_t = Splaymap.mkDict Int.compare;
+(* Agregamos a los diccionarios los maps correspondientes *)
+val maps = [("a",1),("b",2),("c",3),("d",4),("e",5),("f",6),("g",7)];
+val t_TO_n = List.foldl (fn ((t,n),d) => Splaymap.insert(d,t,n)) t_TO_n maps;
+val n_TO_t = List.foldl (fn ((t,n),d) => Splaymap.insert(d,n,t)) n_TO_t maps;
+(* Creamos los moves *)
+val m = [(1,7),(3,5)];
+(* armamos el igraph *)
+val igraph:tigerliveness.igraph = {graph=g,tnode=t_TO_n,gtemp=n_TO_t,moves=m};
+(* Probamos las funciones de debug *)
+(* Imprimimos la informacion de los mapeos *)
+val _ = tigerliveness.debugMaps igraph;
+(* Imprimimos el grafo *)
+val _ = tigerliveness.debugGraph igraph;
+(* Imprimimos la informacion de los moves *)
+val _ = tigerliveness.debugMoves igraph;
+(* Imprimimos toda la informacion del igraph *)
+val _ = tigerliveness.debug igraph;
+
+(* Probando tigerLiveness *)

@@ -64,6 +64,68 @@ fun interferenceGraph ({control,def,use,ismove}:tigerflow.flowgraph) =
 
   in ({graph=igraph,tnode=tnode,gtemp=gtemp,moves=moves},liveOut) end
 
-fun show igraph = print ("Falta completar el debugg en tigerliveness.sml\n")
+fun debugGraph {graph,tnode,gtemp,moves} =
+  let
+    fun graphInfo g = tigergraph.debugGraph g
+  in
+    print("###############################################\n");
+    graphInfo graph;
+    print("\n")
+  end
 
+fun debugMaps {graph,tnode,gtemp,moves} =
+  let
+    fun mapsInfo n_TO_t =
+      let
+        val nodes = List.map (#1) (Splaymap.listItems n_TO_t)
+        fun show (n::ns) =
+          let
+            val _ = print("  -Nodo "^tigergraph.nodename n^": "^Splaymap.find(n_TO_t,n)^"\n")
+          in show ns end
+        | show [] = ()
+      in
+        show nodes
+      end
+  in
+    print("###############################################\n");
+    print("Mostrando mapeos de nodos con temporarios\n");
+    print("La informacion se mostrara de la siguiente manera:\n");
+    print("-Nodo: Temporario\n");
+    mapsInfo gtemp;
+    print("\n")
+  end
+
+(* Si se intercambian las lineas comentadas por las correspondientes se puede imprimir 
+   los moves entre nodos o entre temporarios *)
+fun debugMoves {graph,tnode,gtemp,moves} =
+  let
+    fun movesInfo ((dest,src)::xs) = 
+      let
+        val _ = print("  "^Splaymap.find(gtemp,dest)^" <-- "^Splaymap.find(gtemp,src)^"\n") (*  *)
+        (* val _ = print("  "^tigergraph.nodename dest^" <-- "^tigergraph.nodename src^"\n") *)
+      in movesInfo xs end
+    | movesInfo [] = ()
+  in
+    print("###############################################\n");
+    print("Mostrando informacion de los moves\n");
+    print("La informacion se mostrara de la siguiente manera:\n");
+    print("-TempDest <-- TempSrc\n"); (*  *)
+    (* val _ = print("-NodeDest <-- NodeSrc\n") *)
+    movesInfo moves;
+    print("\n")
+  end
+fun debug igraph =
+  let
+    val _ = debugMaps igraph
+    val _ = debugGraph igraph
+    val _ = debugMoves igraph
+  in () end
+
+(*Borrar
+
+type igraph = {graph: tigergraph.graph,													     (* Grafo de interferencia *)
+						  tnode: (tigertemp.temp,tigergraph.node) Splaymap.dict, (* Mapea temporarios del programa assembler a nodos *)
+						  gtemp: (tigergraph.node,tigertemp.temp) Splaymap.dict, (* Mapeo inverso al anterior, de nodos a temporarios *)
+						  moves: (tigergraph.node * tigergraph.node) list}	     (* Lista de instrucciones moves. Indica que seria bueno asignar a ambos nodos el mismo temporarios si fuera posible *)
+*)
 end

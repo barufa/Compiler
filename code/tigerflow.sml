@@ -71,12 +71,20 @@ fun instr2graph instr =
   in (fgraph,nodes)
   end
 
-fun debug ({control,def,use,ismove},nodes) =
+fun debugGraph ({control,def,use,ismove},nodes) =
   let
-    fun graphInfo g = tigergraph.debug control
+    fun graphInfo g = tigergraph.debugGraph g
+  in
+    print("###############################################\n");
+    graphInfo control;
+    print("\n")
+  end
+
+fun debugNodes ({control,def,use,ismove},nodes) =
+  let
     fun nodesInfo n = 
       let
-        val _ = print ("  Nodo "^(Int.toString n)^":\n")
+        val _ = print ("  -Nodo "^(Int.toString n)^":\n")
         val _ = print ("    Def: ")
         val _ = List.app (fn t => print(t^",")) (Splaymap.find(def,n))
         val _ = print("\n")
@@ -89,12 +97,25 @@ fun debug ({control,def,use,ismove},nodes) =
       in () end
   in
     print("###############################################\n");
-    print("Imprimiendo grafo\n");
-    graphInfo control;
-
-    print("###############################################\n");
-    print("Imprimiendo informacion de nodos\n");
-    List.app nodesInfo nodes
+    print("Imprimiendo informacion del flujo de datos\n");
+    List.app nodesInfo nodes;
+    print("\n")
   end
+
+fun debugTable ({control,def,use,ismove},nodes) =
+  let
+    fun tableInfo g = tigergraph.debugTable g
+  in
+    print("###############################################\n");
+    tableInfo control;
+    print("\n")
+  end
+
+fun debug (fgraph,nodes) =
+  let
+    val _ = debugTable (fgraph,nodes)
+    val _ = debugGraph (fgraph,nodes)
+    val _ = debugNodes (fgraph,nodes)
+  in () end
 
 end
