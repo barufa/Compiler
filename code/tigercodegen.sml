@@ -42,7 +42,7 @@ let val ilist = ref ([]:instr list)
      * the result is saved. *)
     (* Pagina 205 *)
     and munchExp (CONST n) = result ( fn r => emitO("movq $"^(Int.toString n)^", %'d0",[],[r],NONE))
-      | munchExp (NAME n) = result (fn r => emitO("movq $"^n^", %'d0",[],[r],NONE))
+      | munchExp (NAME n) = result (fn r => emitO("leaq "^n^"(%rip), %'d0",[],[r],NONE))
       | munchExp (TEMP t) = t
       | munchExp (BINOP (PLUS, e1, e2)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
                                                             emitO("addq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
