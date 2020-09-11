@@ -50,6 +50,9 @@ fun interferenceGraph ({control,def,use,ismove}:tigerflow.flowgraph) =
       (* Agregamos las aristas del grafo *)
     fun addEdges (node,graph) = foldr (fn (td,g) => foldr (fn (tlo,g') => tigergraph.mk_edge g' {from=mapTemp td,to=mapTemp tlo}) g (Splayset.listItems(findDic liveOut node))) graph (findDic def node)
     val igraph = foldl addEdges igraph nodes
+      (* Borramos Las aristas que van desde un nodo hasta el mismo nodo ya que no tiene sentido decir que
+         un temporal interfiere con si mismo *)
+    val igraph = foldl (fn (n,g) => tigergraph.rm_edge g {from=n,to=n}) igraph (tigergraph.nodes igraph)
 
     (* Ahora procesamos los MOVEs *)
       (* funcion que elimina del grafo la arista que no debia ser agregada en el tratamiento especial de los MOVEs(pag 222, punto 2.). 

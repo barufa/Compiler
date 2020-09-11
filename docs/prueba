@@ -14,6 +14,46 @@ load "String";
 load "Splaymap";
 load "Int";
 
+(* Creando lista de instrucciones para probar tigerFlow y tigerLiveness*)
+val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=[],jump=NONE},           (* c <- 2 *)
+              tigerassem.IOPER{assem="movq $0, %'d0",dst=["a"],src=[],jump=NONE},           (* a <- 0 *)
+              tigerassem.ILABEL{assem="L1:",lab="L1"},                                      (* L1: *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="b",src="a"},                    (* b <- a *)
+              tigerassem.IOPER{assem="addq $1, %'d0",dst=["b"],src=["b"],jump=NONE},        (* b <- b + 1 *)
+              tigerassem.IOPER{assem="addq %'s1, %'d0",dst=["c"],src=["c","b"],jump=NONE},  (* c <- c + b *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="a",src="b"},                    (* a <- b *)
+              tigerassem.IOPER{assem="mulq $2, %'d0",dst=["a"],src=["a"],jump=NONE},        (* a <- a * 2 *)
+              tigerassem.IOPER{assem="cmpq %'s0, $5",dst=[],src=["a"],jump=NONE},           (* if a < 5 goto L1 *)
+              tigerassem.IOPER{assem="jg 'j0",dst=[],src=[],jump=SOME ["L1","L2"]},
+              tigerassem.ILABEL{assem="L2:",lab="L2"},                                      (* L2: *)
+              tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="c"}                       (* d <- c *)
+             ];
+
+(* Ejemplo del libro *)
+val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=[],jump=NONE},           (* c <- 2 *)
+              tigerassem.IOPER{assem="movq $0, %'d0",dst=["a"],src=[],jump=NONE},           (* a <- 0 *)
+              tigerassem.ILABEL{assem="L1:",lab="L1"},                                      (* L1: *)
+              tigerassem.IOPER{assem="addq $1, %'d0",dst=["b"],src=["a"],jump=NONE},        (* b <- a + 1 *)
+              tigerassem.IOPER{assem="addq %'s1, %'d0",dst=["c"],src=["c","b"],jump=NONE},  (* c <- c + b *)
+              tigerassem.IOPER{assem="mulq $2, %'d0",dst=["a"],src=["b"],jump=NONE},        (* a <- b * 2 *)
+              tigerassem.IOPER{assem="cmpq %'s0, $5",dst=[],src=["a"],jump=NONE},           (* if a < 5 goto L1 *)
+              tigerassem.IOPER{assem="jg 'j0",dst=[],src=[],jump=SOME ["L1","L2"]},
+              tigerassem.ILABEL{assem="L2:",lab="L2"},                                      (* L2: *)
+              tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="c"}                       (* d <- c *)
+             ];
+
+(* Otro ejemplo del libro *)
+val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["b"],src=[],jump=NONE},           (* b <- 2 *)
+              tigerassem.IOPER{assem="movq $2, %'d0",dst=["a"],src=["b"],jump=NONE},        (* a <- b * b *)
+              tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=["a","b"],jump=NONE},    (* c <- a + b *)
+              tigerassem.IOPER{assem="cmpq %'s0, '%'d0",dst=[],src=["a","b"],jump=NONE},    (* if a >= b goto L1 *)
+              tigerassem.IOPER{assem="jle 'j0",dst=[],src=[],jump=SOME ["L1","L2"]},
+              tigerassem.ILABEL{assem="L1:",lab="L1"},                                      (* L1: *)
+              tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="a"},                      (* d <- a *)
+              tigerassem.ILABEL{assem="L2:",lab="L2"},                                      (* L2: *)
+              tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="c"}                       (* d <- c *)
+             ];
+
 (* Probando tigerGraph *)
 (* Creo el grafo *)
 val graph = tigergraph.newGraph();
@@ -31,20 +71,6 @@ val graph = List.foldl (fn (e,g) => tigergraph.rm_edge g e) graph deleteEdges;
 val _ = tigergraph.debugGraph graph;
 
 (* Probando tigerFlow *)
-val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=[],jump=NONE},           (* c <- 2 *)
-              tigerassem.IOPER{assem="movq $0, %'d0",dst=["a"],src=[],jump=NONE},           (* a <- 0 *)
-              tigerassem.ILABEL{assem="L1:",lab="L1"},                                      (* L1: *)
-              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="b",src="a"},                    (* b <- a *)
-              tigerassem.IOPER{assem="addq $1, %'d0",dst=["b"],src=["b"],jump=NONE},        (* b <- b + 1 *)
-              tigerassem.IOPER{assem="addq %'s1, %'d0",dst=["c"],src=["c","b"],jump=NONE},  (* c <- c + b *)
-              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="a",src="b"},                    (* a <- b *)
-              tigerassem.IOPER{assem="mulq $2, %'d0",dst=["a"],src=["a"],jump=NONE},        (* a <- a * 2 *)
-              tigerassem.IOPER{assem="cmpq %'s0, $5",dst=[],src=["a"],jump=NONE},           (* if a < 5 goto L1 *)
-              tigerassem.IOPER{assem="jg 'j0",dst=[],src=[],jump=SOME ["L1","L2"]},
-              tigerassem.ILABEL{assem="L2:",lab="L2"},                                      (* L2: *)
-              tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="c"}                       (* d <- c *)
-             ];
-
 val (fgraph,nodes) = tigerflow.instr2graph instrs;
 val _ = tigerflow.debug (fgraph,nodes);
 
@@ -74,3 +100,27 @@ val _ = tigerliveness.debugMoves igraph;
 val _ = tigerliveness.debug igraph;
 
 (* Probando tigerLiveness *)
+val (fgraph,nodes) = tigerflow.instr2graph instrs;
+val (igraph,liveOut) = tigerliveness.interferenceGraph fgraph;
+val _ = tigerliveness.debug igraph;
+
+(* Funcion para imprimir liveOut *)
+fun printLiveOut lo =
+  let
+    fun f (n,set) =
+      let
+        val _ = print("  -Nodo "^tigergraph.nodename n^": ")
+      in
+        Splayset.app (fn a => print (a^",")) set;
+        print("\n")
+      end
+  in
+    print("###############################################\n");
+    print("Imprimiendo liveOut\n");
+    print("La informacion se mostrara de la siguiente manera:\n");
+    print("-Nodo: temp1, ..., tempn\n");
+    List.app f (Splaymap.listItems lo);
+    print("\n")
+  end;
+
+val _ = printLiveOut liveOut;
