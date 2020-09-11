@@ -64,10 +64,8 @@ fun allocMem(k) = InFrame k
 fun allocLocal (f: frame) b =
 	case b of
 	  true =>
-		let
-			val ret = InFrame(!(#actualLocal f)*wSz+localsGap)
-			val _ = #actualLocal f:=(!(#actualLocal f)-1)
-		in ret end
+		let val _ = #actualLocal f:=(!(#actualLocal f)+1)
+		in InFrame(!(#actualLocal f)*wSz+localsGap) end
 	| false => InReg(tigertemp.newtemp())
 val allocArg = allocLocal
 
@@ -97,8 +95,8 @@ fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
 
 fun procEntryExit3 (frame,body) =(*COMPLETADO*)
   let
-    val tam = !(#actualLocal frame) * wSz
-    val size = if tam mod 16 = 0 then tam else tam + wSz (*Tamaño del frame*)
+    val tam = (!(#actualLocal frame) * wSz)
+    val size = ((tam + 15) div 16) * 16 (*Tamaño del frame*)
   in {prolog = ".global " ^ name(frame) ^ "\n" ^
                  "\t" ^ name(frame) ^ ":\n" ^
                  "\tpushq %rbp\n" ^

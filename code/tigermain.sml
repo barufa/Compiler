@@ -58,11 +58,14 @@ fun main(args) =
                                   fun escape s = List.foldr (fn (x, acc) => case x of
                                                                              #"\n" => "\\n"^acc
                                                                             |  _  => String.str(x)^acc) "" (String.explode s)
+                                  val _ = allocLocal
                                   val _ = print("##START##\n")
                                   val _ = print("\n.data\n")
                                   val _ = List.map (fn (l,s) => print(l^":\t.quad "^Int.toString(String.size s)^"\n\t.string \""^(escape s)^"\"\n")) stringlist
                                   val _ = print("\n.text\n")
-					              val proc_l = List.map (fn (bl,f) => let val il = List.map (fn b => codegen f b) bl in (procEntryExit3(f,flat il)) end) proclist
+					              val proc_l = List.map (fn (bl,f) => let (*val _ = allocLocal f true (*Aloca variables locales (en frame o registro) y retorna el lugar*)*)
+                                                                          val il = List.map (fn b => codegen f b) bl
+                                                                      in (procEntryExit3(f,flat il)) end) proclist
                                   val _ = List.map (fn proc => let val _ = print(#prolog proc)
                                                                    val instrlist = (List.map showCode (#body proc)) @ ["\n\n"]
                                                                    val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
