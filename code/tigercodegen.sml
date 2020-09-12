@@ -35,6 +35,7 @@ let val ilist = ref ([]:instr list)
 					end
       | munchStm (SEQ (e1, e2)) = (munchStm e1; munchStm e2)
       | munchStm (LABEL l) = emitL(l)
+      | munchStm (COMMENT c) = emit(tigerassem.IOPER {assem = "#"^c^"\n",dst = [],src = [],jump = NONE})
       | munchStm _ = raise Fail "Casos no cubiertos en tigercodegen.munchStm"
 
 	(* munchExp: Tree.exp -> Temp.temp
@@ -81,7 +82,7 @@ let val ilist = ref ([]:instr list)
               | args2regs args [] = args2stack(rev(args))(*ya use los 6 regitros para argumentos*)
               | args2regs (x::args) (r::regs) = let val _ = munchStm(MOVE (TEMP r, x)) in r ::(args2regs args regs) end
             val src_reg = args2regs argss argsregs
-        in emitO("call "^n,src_reg,calldefs,NONE); emit_pops(!pop_list) end
+        in emitO("call "^n,src_reg,callersaves,NONE) end
 
 in munchStm stm; rev(!ilist) end
 
