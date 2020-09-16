@@ -89,6 +89,8 @@ fun nodename node = Int.toString node
 fun debugGraph g =
   let
     val _ = print("Imprimiendo informacion del grafo\n")
+    val _ = print("La informacion se mostrara de la siguiente manera:\n")
+    val _ = print("-Nodo\n  -Predecesores\n  -Sucesores\n\n")
     fun infoNode n =
       let
         val _ = print("  -Nodo "^nodename n^":\n")
@@ -100,8 +102,6 @@ fun debugGraph g =
         val _ = List.app f (succ g n)
         val _ = print("\n")
       in () end
-    val _ = print("La informacion se mostrara de la siguiente manera:\n")
-    val _ = print("-Nodo\n  -Predecesores\n  -Sucesores\n\n")
   in
     List.app infoNode (nodes g)
   end
@@ -109,13 +109,13 @@ fun debugGraph g =
 fun debugTable g =
   let
     val _ = print("Imprimiendo informacion de la tabla\n")
+    val _ = print("La informacion se mostrara de la siguiente manera:\n")
+    val _ = print("-Nodo: Instruccion\n\n")
     fun infoTable n =
       let
         val _ = print("  Nodo "^nodename n^": ")
         val _ = tigerassem.formatCode (valNode n)
       in () end
-    val _ = print("La informacion se mostrara de la siguiente manera:\n")
-    val _ = print("-Nodo: Instruccion\n\n")
   in
     List.app infoTable (nodes g)
   end

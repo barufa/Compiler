@@ -1,11 +1,14 @@
 structure tigercolor :> tigercolor = 
 struct
 
+open tigerassem
+
 type allocation = (tigertemp.temp,tigerframe.register) Splaymap.dict
 
 fun color (instr, frame) =
   let
-    fun edgeCmp (t1,t2) (t3,t4) = if (String.compare(t1,t2) = EQUAL) then String.compare(t3,t4) else String.compare(t1,t2)
+    val _ = print("Entrando en la funcion color\n")
+    fun edgeCmp ((t1,t2),(t3,t4)) = if (String.compare(t1,t3) = EQUAL) then String.compare(t2,t4) else String.compare(t1,t3)
 
     (*  *)
     val interference: tigerliveness.igraph ref = ref ({graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]})
@@ -32,17 +35,37 @@ fun color (instr, frame) =
     val worklistMoves: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
     val activeMoves: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
 
-    val adjSet: tigertemp.temp * tigertemp.temp Splayset.set ref = ref (Splayset.empty edgeCmp)
+    val adjSet: (tigertemp.temp * tigertemp.temp) Splayset.set ref = ref (Splayset.empty edgeCmp)
     val adjList: (tigertemp.temp,tigertemp.temp Splayset.set) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
     val degree: (tigertemp.temp,int) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
     val moveList: (tigertemp.temp,(tigertemp.temp * tigertemp.temp) Splayset.set) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
     val alias: (tigertemp.temp,tigertemp.temp) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
-    val color : (tigertemp.temp,tigerframe.register) Splaymap dict ref = ref (Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) !precolored)
+    val color: allocation ref = ref (Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) (!precolored))
 
-    val K: int = Splayset.numItems !precolored
+    val K: int = Splayset.numItems (!precolored)
+
+    (* Mapeamos temporales que se movieron a memoria a su direccion de memoria correspondiente.
+       Luego en el .data se reservara espacio en memoria para estos valores. *)
+    val spillTable: (tigertemp.temp,String.string) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
 
     (* Funciones *)
       (* Funciones auxiliares*)
+    fun spillNewNode t =
+      let
+        fun spill () =
+          let
+            val n = Splaymap.numItems (!spillTable)
+            val s = "spill"^Int.toString (n+1)
+            val _ = spillTable := Splaymap.insert(!spillTable,t,s)
+          in () end
+      in
+        case Splaymap.peek(!spillTable,t) of
+          SOME v => ()
+          | NONE => spill()
+      end
+
+    fun mapSpillNode t = Splaymap.find(!spillTable,t)
+
     fun GetDegree n = case Splaymap.peek(!degree,n) of
                        SOME v => v
                        | NONE => 0
@@ -55,14 +78,18 @@ fun color (instr, frame) =
                           SOME v => v
                           | NONE => Splayset.empty edgeCmp
 
-    fun PushSelectStack n = tigerpila.pushPila selectStack n;selectStackSet := Splayset.add(!selectStackSet,n)
+    fun PushSelectStack n = (* tigerpila.pushPila selectStack n;selectStackSet := Splayset.add(!selectStackSet,n) *)
+      let
+        val _ = tigerpila.pushPila selectStack n
+        val _ = selectStackSet := Splayset.add(!selectStackSet,n)
+      in () end
 
-    fun PopSelectStack =
+    fun PopSelectStack () =
       let
         val n = tigerpila.topPila selectStack
       in tigerpila.popPila selectStack;selectStackSet := Splayset.delete(!selectStackSet,n);n end 
 
-    fun EmptySelectStack = 
+    fun EmptySelectStack () = 
       while(tigerpila.lenPila selectStack > 0)
       do(tigerpila.popPila selectStack)
 
@@ -79,7 +106,7 @@ fun color (instr, frame) =
       if ((not(Splayset.member(!adjSet,(u,v)))) andalso (not(String.compare (u,v) = EQUAL)))
       then (adjSet := Splayset.add(!adjSet,(u,v));
             adjSet := Splayset.add(!adjSet,(v,u));
-            if (not(Splayset.member(precolored,u)))
+            if (not(Splayset.member(!precolored,u)))
             then (adjList := Splaymap.insert(!adjList,u,(Splayset.add((GetAdjList u),v)));
                   degree := Splaymap.insert(!degree,u,((GetDegree u) + 1)))
             else ();
@@ -89,9 +116,10 @@ fun color (instr, frame) =
             else ())
       else ()
 
-    fun Build instrs
+    fun Build instrs =
       let
-        val live = ref (Splaymap.fold (fn (key,value,set) => Splayset.union(value,set)) (Splayset.empty String.compare) !liveOut)
+        val _ = print("    Entrando a la funcion Build\n")
+        val live = ref (Splaymap.foldl (fn (key,value,set) => Splayset.union(value,set)) (Splayset.empty String.compare) (!liveOut))
         fun getDst inst = case inst of
                              IOPER {assem,dst,src,jump} => Splayset.addList(Splayset.empty String.compare,dst)
                            | IMOVE {assem,dst,src} => Splayset.add(Splayset.empty String.compare,dst)
@@ -103,36 +131,68 @@ fun color (instr, frame) =
         fun isMove inst = case inst of
                              IMOVE {...} => true
                            | _ => false
-        fun aux ILABEL{...} = ()
+        fun aux (ILABEL{...}) = ()
         | aux inst =
+          (* let
+            val def_I = getDst inst
+            val use_I = getSrc inst
+            val _ = if (isMove inst) (* Si es una instruccion move, def_I y use_I tienen un solo elemento *)
+                    then (live := Splayset.difference(!live,use_I);
+                          moveList := Splaymap.insert(!moveList,getItem def_I,Splayset.add(GetMoveList def_I,(getItem def_I,getItem use_I)));
+                          moveList := Splaymap.insert(!moveList,getItem use_I,Splayset.add(GetMoveList use_I,(getItem def_I,getItem use_I)));
+                          worklistMoves := Splayset.add(!worklistMoves,(getItem def_I,getItem use_I)))
+                    else ()
+            val _ = live := Splayset.union(!live,def_I)
+            val _ = Splayset.app (fn d => Splayset.app (fn l => AddEdge(l, d)) !live) def_I
+            val _ = live := Splayset.union(use_I,Splayset.difference(!live,def_I))
+          in () end *)
           let
             val def_I = getDst inst
             val use_I = getSrc inst
           in
             if (isMove inst) (* Si es una instruccion move, def_I y use_I tienen un solo elemento *)
             then (live := Splayset.difference(!live,use_I);
-                  moveList := Splaymap.insert(!moveList,getItem def_I,Splayset.add(GetMoveList def_I,(getItem def_I,getItem use_I)));
-                  moveList := Splaymap.insert(!moveList,getItem use_I,Splayset.add(GetMoveList use_I,(getItem def_I,getItem use_I)));
-                  worklistMoves := Splayset.add(!worklistMoves,(getItem def_I,getItem use_I));
-                 );
+                  moveList := Splaymap.insert(!moveList,getItem def_I,Splayset.add(GetMoveList (getItem def_I),(getItem def_I,getItem use_I)));
+                  moveList := Splaymap.insert(!moveList,getItem use_I,Splayset.add(GetMoveList (getItem use_I),(getItem def_I,getItem use_I)));
+                  worklistMoves := Splayset.add(!worklistMoves,(getItem def_I,getItem use_I)))
+            else ();
             live := Splayset.union(!live,def_I);
-            Splayset.app (fn d => Splayset.app (fn l => AddEdge(l, d)) !live) def_I;
+            Splayset.app (fn d => Splayset.app (fn l => AddEdge(l, d)) (!live)) def_I;
             live := Splayset.union(use_I,Splayset.difference(!live,def_I))
           end
-      in
-        List.app (fn i => aux i) (List.rev instrs)
-      end
+        val _ = List.app (fn i => aux i) (List.rev instrs)
+        val _ = print("    Saliendo de la funcion Build\n")
+      in () end
 
     fun NodeMoves n = Splayset.intersection(GetMoveList n,Splayset.union(!activeMoves,!worklistMoves))
 
     fun MoveRelated n = not(Splayset.isEmpty(NodeMoves n))
 
-    fun MakeWorklist () = Splayset.app (fn n => initial := Splayset.delete(!initial,n);
-                                                if (GetDegree n >= K)
-                                                then (spillWorklist := Splayset.add(!spillWorklist,n))
-                                                else(if (MoveRelated n)
-                                                     then (freezeWorklist := Splayset.add(!freezeWorklist,n))
-                                                     else (simplifyWorklist := Splayset.add(!simplifyWorklist,n)))) !initial
+    fun MakeWorklist () =
+      let
+        val _ = print("    Entrando a la funcion MakeWorklist\n")
+        fun proccess n =
+          let
+            val _ = initial := Splayset.delete(!initial,n)
+            val _ = if (GetDegree n >= K)
+                    then (spillWorklist := Splayset.add(!spillWorklist,n))
+                    else(if (MoveRelated n)
+                         then (freezeWorklist := Splayset.add(!freezeWorklist,n))
+                         else (simplifyWorklist := Splayset.add(!simplifyWorklist,n)))
+          in () end
+        val _ = Splayset.app proccess (!initial)
+        val _ = print("    Saliendo de la funcion MakeWorklist\n")
+      in () end
+
+(*    fun MakeWorklist () = Splayset.app (fn n => let
+                                                  val _ = initial := Splayset.delete(!initial,n)
+                                                  val _ = if (GetDegree n >= K)
+                                                          then (spillWorklist := Splayset.add(!spillWorklist,n))
+                                                          else(if (MoveRelated n)
+                                                               then (freezeWorklist := Splayset.add(!freezeWorklist,n))
+                                                               else (simplifyWorklist := Splayset.add(!simplifyWorklist,n)))
+                                                in () end) (!initial)
+*)
 
     fun Adjacent n = Splayset.intersection(GetAdjList n,Splayset.union(!selectStackSet,!coalescedNodes))
 
@@ -154,23 +214,35 @@ fun color (instr, frame) =
 
     fun Simplify () = 
       let
-        val n = getItem !simplifyWorklist
+        val _ = print("    Entrando a la funcion Simplify\n")
+        val n = getItem (!simplifyWorklist)
       in 
         simplifyWorklist := Splayset.delete(!simplifyWorklist,n);
         PushSelectStack n;
-        Splayset.app (fn m => DecrementDegree m) (Adjacent n)
+        Splayset.app (fn m => DecrementDegree m) (Adjacent n);
+        print("    Saliendo de la funcion Simplify\n")
       end
 
-    fun AddWorkList u = if (not(Splayset.member(!precolored,u)) andalso not(MoveRelated u) andalso GetDegree u < K)
+    fun AddWorkList u =
+      let
+        val _ = print("      Entrando a la funcion AddWorkList\n")
+        val _ = if (not(Splayset.member(!precolored,u)) andalso not(MoveRelated u) andalso GetDegree u < K)
+                then (freezeWorklist := Splayset.delete(!freezeWorklist,u);
+                      simplifyWorklist := Splayset.add(!simplifyWorklist,u))
+                else ()
+        val _ = print("      Saliendo de la funcion AddWorkList\n")
+      in () end
+
+(*    fun AddWorkList u = if (not(Splayset.member(!precolored,u)) andalso not(MoveRelated u) andalso GetDegree u < K)
                         then (freezeWorklist := Splayset.delete(!freezeWorklist,u);
                               simplifyWorklist := Splayset.add(!simplifyWorklist,u))
                         else ()
-
+*)
     fun OK (t,r) = GetDegree t < K orelse Splayset.member(!precolored,t) orelse Splayset.member(!adjSet,(t,r))
 
     fun Conservative nodes = 
       let
-        j = ref 0
+        val j = ref 0
       in
         Splayset.app (fn n => if (GetDegree n >= K) then (j := !j + 1) else ()) nodes;!j < K
       end
@@ -179,21 +251,27 @@ fun color (instr, frame) =
                      then GetAlias(Splaymap.find(!alias,n))
                      else n
 
-    fun Combine (u,v) = if (Splayset.member(!freezeWorklist,v))
-                        then (freezeWorklist := Splayset.delete(!freezeWorklist,v))
-                        else (spillWorklist := Splayset.delete(!spillWorklist,v));
-                        coalescedNodes := Splayset.add(!coalescedNodes,v);
-                        alias := Splaymap.insert(!alias,v,u);
-                        moveList := Splaymap.insert(!moveList,u,Splayset.union(Splaymap.find(!moveList,u),Splaymap.find(!moveList,v)));
-                        Splayset.app (fn t => AddEdge (t,u);DecrementDegree t) (Adjacent v);
-                        if (GetDegree u >= K andalso Splayset.member(!freezeWorklist,u))
-                        then (freezeWorklist := Splayset.delete(!freezeWorklist,u);
-                              spillWorklist := Splayset.add(spillWorklist,u))
-                        else ()
+    fun Combine (u,v) =
+      let
+        val _ = print("      Entrando a la funcion Combine\n")
+        val _ = if (Splayset.member(!freezeWorklist,v))
+                then (freezeWorklist := Splayset.delete(!freezeWorklist,v))
+                else (spillWorklist := Splayset.delete(!spillWorklist,v))
+        val _ = coalescedNodes := Splayset.add(!coalescedNodes,v)
+        val _ = alias := Splaymap.insert(!alias,v,u)
+        val _ = moveList := Splaymap.insert(!moveList,u,Splayset.union(Splaymap.find(!moveList,u),Splaymap.find(!moveList,v)))
+        val _ = Splayset.app (fn t => let val _ = AddEdge (t,u) val _ = DecrementDegree t in () end) (Adjacent v)
+        val _ = if (GetDegree u >= K andalso Splayset.member(!freezeWorklist,u))
+                then (freezeWorklist := Splayset.delete(!freezeWorklist,u);
+                      spillWorklist := Splayset.add(!spillWorklist,u))
+                else ()
+        val _ = print("      Saliendo de la funcion Combine\n")
+      in () end
 
     fun Coalesce () = 
       let
-        val m = getItem !worklistMoves
+        val _ = print("    Entrando a la funcion Coalesce\n")
+        val m = getItem (!worklistMoves)
         val (x,y) = m
         val x = GetAlias x
         val y = GetAlias y
@@ -202,16 +280,17 @@ fun color (instr, frame) =
         worklistMoves := Splayset.delete(!worklistMoves,m);
         if (String.compare(u,v) = EQUAL)
         then (coalescedMoves := Splayset.add(!coalescedMoves,m);
-              AddWorkList u;)
+              AddWorkList u)
         else (if (Splayset.member(!precolored,v) orelse Splayset.member(!adjSet,(u,v)))
               then (constrainedMoves := Splayset.add(!constrainedMoves,m);
                     AddWorkList u;
                     AddWorkList v)
-              else (if ((Splayset.member(!precolored,u) andalso (foldr (fn (t,b) => OK(t,u) andalso b ) true (Adjacent v))) orelse (not((Splayset.member(!precolored,u)) andalso Conservative(Splayset.union(Adjacent u,Adjacent v))))
+              else (if ((Splayset.member(!precolored,u) andalso (Splayset.foldr (fn (t,b) => OK(t,u) andalso b ) true (Adjacent v))) orelse (not((Splayset.member(!precolored,u)) andalso Conservative(Splayset.union(Adjacent u,Adjacent v)))))
                     then (coalescedMoves := Splayset.add(!coalescedMoves,m);
                           Combine(u,v);
                           AddWorkList u)
                     else (activeMoves := Splayset.add(!activeMoves,m))));
+        print("    Saliendo de la funcion Coalesce\n")
       end
 
     fun FreezeMoves u =
@@ -223,164 +302,205 @@ fun color (instr, frame) =
                     activeMoves := Splayset.delete(!activeMoves,m);
                     frozenMoves := Splayset.add(!frozenMoves,m);
                     if (Splayset.isEmpty(NodeMoves v) andalso (GetDegree v) < K)
-                    then (freezeWorklist := Splayset.detele(!freezeWorklist,v);
-                          simplifyWorklist := Splaysetadd(!simplifyWorklist,v))
+                    then (freezeWorklist := Splayset.delete(!freezeWorklist,v);
+                          simplifyWorklist := Splayset.add(!simplifyWorklist,v))
                     else ()
                   end
-      in Splayset.app f (NodeMoves u)
+      in Splayset.app f (NodeMoves u) end
 
     fun Freeze () =
       let
-        val u = getItem !freezeWorklist
+        val _ = print("    Entrando a la funcion Freeze\n")
+        val u = getItem (!freezeWorklist)
       in
         freezeWorklist := Splayset.delete(!freezeWorklist,u);
         simplifyWorklist := Splayset.add(!simplifyWorklist,u);
-        FreezeMoves u
+        FreezeMoves u;
+        print("    Saliendo de la funcion Freeze\n")
       end
 
     fun SelectSpill () =
       let
-        val m = GetItem !spillWorklist
+        val _ = print("    Entrando a la funcion SelectSpill\n")
+        val m = getItem (!spillWorklist)
       in
         spillWorklist := Splayset.delete(!spillWorklist,m);
         simplifyWorklist := Splayset.add(!simplifyWorklist,m);
-        FreezeMoves(m)
+        FreezeMoves(m);
+        print("    Saliendo de la funcion SelectSpill\n")
       end
 
-    fun AssignColors () = 
-      while (tigerpila.lenPila selectStack > 0)
-      do (let
+    fun AssignColors () =
+      let
+        val _ = print("    Entrando a la funcion AssignColors\n")
+        fun aux () =
+          let
+            val _ = print("      Entrando a la funcion aux\n")
             val n = PopSelectStack ()
-            val okColors = ref (Splayset.addList(Splayset.empty String.compare,!registers))
-          in
-            Splayset.app (fn w => if Splayset.member(Splayset.union(!coloredNodes,!precolored),GetAlias w) then (okColors := Splayset.delete(!okColors,GetColor(GetAlias(w)))) else ()) (GetAdjList n);
-            if Splayset.isEmpty(!okColors)
-            then (spilledNodes := Splayset.add(!spilledNodes,n))
-            else (coloredNodes := Splayset.union(!coloredNodes,n);
-                  color := Splaymap.insert(!color,n,getItem !okColor));
-          end);
-      Splayset.app (fn n => color := Splaymap.insert(!color,n,GetColor(GetAlias(n)))) !coalescedNodes
+            val _ = print("a\n")
+            val okColors = ref (Splayset.addList(Splayset.empty String.compare,registers))
+            val _ = print("b\n")
+            val _ = Splayset.app (fn w => if Splayset.member(Splayset.union(!coloredNodes,!precolored),GetAlias w) then (okColors := Splayset.delete(!okColors,GetColor(GetAlias(w)))) else ()) (GetAdjList n)
+            val _ = print("c\n")
+            val _ = if Splayset.isEmpty(!okColors)
+                    then (spilledNodes := Splayset.add(!spilledNodes,n))
+                    else (coloredNodes := Splayset.add(!coloredNodes,n);
+                          color := Splaymap.insert(!color,n,getItem (!okColors))) 
+            val _ = print("      Saliendo de la funcion aux\n")
+          in () end
+      in
+        while (tigerpila.lenPila selectStack > 0)
+        do (aux());
+        Splayset.app (fn n => color := Splaymap.insert(!color,n,GetColor(GetAlias(n)))) (!coalescedNodes);
+        print("    Saliendo de la funcion AssignColors\n")
+      end
 
     fun RewriteProgram instrs =
+      let
+        val _ = print("    Entrando a la funcion RewriteProgram\n")
+        (*  *)
+        fun addNewTemps (IOPER{assem,dst,src,jump}::inst) temp (ilist,dlist,ulist) = 
+          let
+            val (dlist,dst) = if List.exists (fn n => String.compare(n,temp) = EQUAL) dst then (let val t = tigertemp.newtemp() in (t::dlist,List.map (fn t' => if String.compare(t',temp)=EQUAL then t else t') dst) end) else (dlist,dst)
+            val (ulist,src) = if List.exists (fn n => String.compare(n,temp) = EQUAL) src then (let val t = tigertemp.newtemp() in (t::ulist,List.map (fn t' => if String.compare(t',temp)=EQUAL then t else t') src) end) else (ulist,src)
+            val ilist = IOPER{assem=assem,dst=dst,src=src,jump=jump}::ilist
+          in addNewTemps inst temp (ilist,dlist,ulist) end
+        | addNewTemps (IMOVE{assem,dst,src}::inst) temp (ilist,dlist,ulist) = 
+          let
+            val (dlist,dst) = if String.compare(dst,temp) = EQUAL then (let val t = tigertemp.newtemp() in (t::dlist,t) end) else (dlist,dst)
+            val (ulist,src) = if String.compare(src,temp) = EQUAL then (let val t = tigertemp.newtemp() in (t::ulist,t) end) else (ulist,src)
+            val ilist = IMOVE{assem=assem,dst=dst,src=src}::ilist
+          in addNewTemps inst temp (ilist,dlist,ulist) end
+        | addNewTemps (i::inst) temp (ilist,dlist,ulist) = addNewTemps inst temp (i::ilist,dlist,ulist)
+        | addNewTemps [] temp (ilist,dlist,ulist) = (List.rev ilist,dlist,ulist)
+        (*  *)
+        fun addStore (IOPER{assem,dst,src,jump}::inst) temp ilist dlist = 
+          let
+            val a = Splayset.intersection(Splayset.addList(Splayset.empty String.compare,dst),Splayset.addList(Splayset.empty String.compare,dlist))
+            val _ = if Splayset.numItems(a) > 1 then print("tigercolor: Chequear. Tiene mas de 2 elementos.\n") else ()
+            val t' = if Splayset.numItems(a) > 0 then getItem a else ""
+            val l = if Splayset.numItems(a) > 0 then [IOPER{assem="movq %'s1, (%'s0)",src=[(mapSpillNode temp),t'],dst=[],jump=NONE},IOPER{assem=assem,dst=dst,src=src,jump=jump}] else [IOPER{assem=assem,dst=dst,src=src,jump=jump}]
+            val ilist = l @ ilist
+          in addStore inst temp ilist dlist end
+        | addStore (IMOVE{assem,dst,src}::inst) temp ilist dlist = 
+          let
+            val l = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then [IOPER{assem="movq %'s1, (%'s0)",src=[(mapSpillNode temp),dst],dst=[],jump=NONE},IMOVE{assem=assem,dst=dst,src=src}] else [IMOVE{assem=assem,dst=dst,src=src}]
+            val ilist = l @ ilist
+          in addStore inst temp ilist dlist end
+        | addStore (i::inst) temp ilist dlist = addStore inst temp (i::ilist) dlist
+        | addStore [] temp ilist dlist = List.rev ilist
+        (*  *)
+        fun addLoad (IOPER{assem,dst,src,jump}::inst) temp ilist ulist = 
+          let
+            val a = Splayset.intersection(Splayset.addList(Splayset.empty String.compare,src),Splayset.addList(Splayset.empty String.compare,ulist))
+            val _ = if Splayset.numItems(a) > 1 then print("tigercolor: Chequear. Tiene mas de 2 elementos.\n") else ()
+            val t' = if Splayset.numItems(a) > 0 then getItem a else ""
+            val l = if Splayset.numItems(a) > 0 then [IOPER{assem=assem,dst=dst,src=src,jump=jump},IOPER{assem="movq (%'s0), %'d0",src=[mapSpillNode temp],dst=[t'],jump=NONE}] else [IOPER{assem=assem,dst=dst,src=src,jump=jump}]
+            val ilist = l @ ilist
+          in addLoad inst temp ilist ulist end
+        | addLoad (IMOVE{assem,dst,src}::inst) temp ilist ulist = 
+          let 
+            val l = if List.exists (fn n => String.compare(n,src) = EQUAL) ulist then [IMOVE{assem=assem,dst=dst,src=src},IOPER{assem="movq (%'s0), %'d0",src=[mapSpillNode temp],dst=[dst],jump=NONE}] else [IMOVE{assem=assem,dst=dst,src=src}]
+            val ilist = l @ ilist
+          in addLoad inst temp ilist ulist end
+        | addLoad (i::inst) temp ilist ulist = addLoad inst temp (i::ilist) ulist
+        | addLoad [] temp ilist ulist = List.rev ilist
+        (*  *)
+        fun proccess (temp,inst) =
+          let
+            val (ilist,dlist,ulist) = addNewTemps inst temp ([],[],[])
+            val ilist = addStore ilist temp [] dlist
+            val ilist = addLoad ilist temp [] ulist
+          in ilist end
+        (* Agregamos los temporarios que se van a mover a memoria a la tabla de temporarios derramados *)
+        val _ = List.app (fn t => spillNewNode t) (Splayset.listItems (!spilledNodes))
+        (* Modificamos las instrucciones *)
+        val instrs = List.foldl proccess instrs (Splayset.listItems (!spilledNodes))
+        val _ = print("    Saliendo de la funcion RewriteProgram\n")
+      in
+        instrs
+      end
 
     fun LivenessAnalysis instrs =
       let
+        val _ = print("    Entrando en la funcion LivenessAnalysis\n")
         val (fgraph,nodes) = tigerflow.instr2graph instrs
         val (ig,lo) = tigerliveness.interferenceGraph fgraph
         val {control, def, use, ismove} = fgraph
-      in 
-        interference := ig;
-        liveOut := lo;
+        val _ = interference := ig
+        val _ = liveOut := lo
         (* Inicializamos initial con todos los temporales*)
-        List.app (fn n => List.app (fn t => initial := Splayset.add(!initial,t)) (Splaymap.find(def,n) @ Splaymap.find(use,n))) nodes;
+        val _ = List.app (fn n => List.app (fn t => initial := Splayset.add(!initial,t)) (Splaymap.find(def,n) @ Splaymap.find(use,n))) nodes
         (* Eliminamos de initial los temporales precoloreados *)
-        Splayset.app (fn t => initial := Splayset.delete(!initial,t)) !precolored
-      end
+        val _ = Splayset.app (fn t => if Splayset.member(!initial,t) then (initial := Splayset.delete(!initial,t)) else ()) (!precolored)
+        val _ = print("    Saliendo de la funcion LivenessAnalysis\n")
+      in () end
 
     (* Init inicializa todas la variables para cuando se vuelva a llamar main
     despues de reescribir el programa estas esten igual que como se llamo a
     la funcion color *)
     fun Init () =
-      (* interference := {graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]} *)
-      liveOut := Splaymap.mkDict Int.compare;
-      spillCost := Splaymap.mkDict Int.compare;
-      (* registers: tigerframe.register list = tigerframe.machineregs; *)
-      (* precolored := Splayset.addList(Splayset.empty String.compare,registers); *)
-      initial := Splayset.empty String.compare;
-      simplifyWorklist := Splayset.empty String.compare;
-      freezeWorklist := Splayset.empty String.compare;
-      spillWorklist := Splayset.empty String.compare;
-      spilledNodes := Splayset.empty String.compare;
-      coalescedNodes := Splayset.empty String.compare;
-      coloredNodes := Splayset.empty String.compare;
-      (* Vacio la pila en vez de crear una nueva vacia *)
-      EmptySelectStack();
-      selectStackSet := Splayset.empty String.compare;
-      coalescedMoves := Splayset.empty edgeCmp;
-      constrainedMoves := Splayset.empty edgeCmp;
-      frozenMoves := Splayset.empty edgeCmp;
-      worklistMoves := Splayset.empty edgeCmp;
-      activeMoves := Splayset.empty edgeCmp;
-      adjSet := Splayset.empty edgeCmp;
-      adjList := Splaymap.mkDict String.compare;
-      degree := Splaymap.mkDict String.compare;
-      moveList := Splaymap.mkDict String.compare;
-      alias := Splaymap.mkDict String.compare;
-      color := Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) !precolored
-      (* K: int = Splayset.numItems !precolored *)
+      let 
+        val _ = print("    Entrando a la funcion Init\n")
+        (* val _ = interference := {graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]} *)
+        val _ = liveOut := Splaymap.mkDict Int.compare
+        val _ = spillCost := Splaymap.mkDict Int.compare
+        (* val _ = registers: tigerframe.register list = tigerframe.machineregs *)
+        (* val _ = precolored := Splayset.addList(Splayset.empty String.compare,registers) *)
+        val _ = initial := Splayset.empty String.compare
+        val _ = simplifyWorklist := Splayset.empty String.compare
+        val _ = freezeWorklist := Splayset.empty String.compare
+        val _ = spillWorklist := Splayset.empty String.compare
+        val _ = spilledNodes := Splayset.empty String.compare
+        val _ = coalescedNodes := Splayset.empty String.compare
+        val _ = coloredNodes := Splayset.empty String.compare
+        (* Vacio la pila en vez de crear una nueva vacia *)
+        val _ = EmptySelectStack()
+        val _ = selectStackSet := Splayset.empty String.compare
+        val _ = coalescedMoves := Splayset.empty edgeCmp
+        val _ = constrainedMoves := Splayset.empty edgeCmp
+        val _ = frozenMoves := Splayset.empty edgeCmp
+        val _ = worklistMoves := Splayset.empty edgeCmp
+        val _ = activeMoves := Splayset.empty edgeCmp
+        val _ = adjSet := Splayset.empty edgeCmp
+        val _ = adjList := Splaymap.mkDict String.compare
+        val _ = degree := Splaymap.mkDict String.compare
+        val _ = moveList := Splaymap.mkDict String.compare
+        val _ = alias := Splaymap.mkDict String.compare
+        val _ = color := Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) (!precolored)
+        (* val _ = K: int = Splayset.numItems !precolored *)
+        val _ = print("    Saliendo de la funcion Init\n")
+      in () end
 
     fun Main instrs = 
       let
-        Init();
-        LivenessAnalysis instrs;
-        Build instrs;
-        MakeWorklist();
-        while ((not Splayset.isempty !simplifyWorklist) orelse (not Splayset.isempty !worklistMoves) orelse
-               (not Splayset.isempty  !freezeWorklist) orelse (not Splayset.isempty !spillWorklist))
-        do (if (not Splayset.isempty !simplifyWorklist) then Simplify()
-            else if (not Splayset.isempty !worklistMoves) then Coalesce()
-            else if (not Splayset.isempty !freezeWorklist) then Freeze()
-            else if (not Splayset.isempty !spillWorklist) then SelectSpill()
-           );
-        AssignColors();
-        if (not Splayset.isempty !spilledNodes)
-        then Main(RewriteProgram instrs)
+        val _ = print("  Entrando a la funcion Main\n")
+        val _ = Init()
+        val _ = LivenessAnalysis instrs
+        val _ = Build instrs
+        val _ = MakeWorklist()
+        val _ = while ((not (Splayset.isEmpty (!simplifyWorklist))) orelse (not (Splayset.isEmpty (!worklistMoves))) orelse (not (Splayset.isEmpty  (!freezeWorklist))) orelse (not (Splayset.isEmpty (!spillWorklist))))
+                do (if (not (Splayset.isEmpty (!simplifyWorklist))) then Simplify()
+                    else if (not (Splayset.isEmpty (!worklistMoves))) then Coalesce()
+                    else if (not (Splayset.isEmpty (!freezeWorklist))) then Freeze()
+                    else if (not (Splayset.isEmpty (!spillWorklist))) then SelectSpill()
+                    else ())
+        val _ = AssignColors()
+        val inst = if (not (Splayset.isEmpty (!spilledNodes)))
+                   then Main(RewriteProgram instrs)
+                   else (instrs)
+        val _ = print("  Saliendo de la funcion Main\n")
       in
-        ()
+        inst
       end
 
-  in
-    Main instr;
-  end
-end
+    val instrucciones = Main instr
 
-(* Alternativa *)
-(*
+    val _ = print("Saliendo de la funcion color\n")
   in
-    (* Funcion color *)
-    LivenessAnalysis();
-    Build();
-    MakeWorklist;
-    while ((not Splayset.isempty !simplifyWorklist) orelse (not Splayset.isempty !worklistMoves) orelse
-           (not Splayset.isempty  !freezeWorklist) orelse (not Splayset.isempty !spillWorklist))
-    do (if (not Splayset.isempty !simplifyWorklist) then Simplify()
-        else if (not Splayset.isempty !worklistMoves) then Coalesce()
-        else if (not Splayset.isempty !freezeWorklist) then Freeze()
-        else if (not Splayset.isempty !spillWorklist) then SelectSpill()
-       );
-    AssignColors();
-    if (not Splayset.isempty !spilledNodes)
-    then color(RewriteProgram(),frame)
+    (instrucciones,!color,!spillTable)
   end
 
-end
-*)
-(* Alternativa *)
-(*
-    fun Main instr = 
-      let
-        Init();   (* Init inicializa todas la variables para cuando se vuelva a llamar main
-                   despues de reescribir el programa estas esten igual que como se llamo a
-                   la funcion color *)
-        LivenessAnalysis instr;
-        Build();
-        MakeWorklist;
-        while ((not Splayset.isempty !simplifyWorklist) orelse (not Splayset.isempty !worklistMoves) orelse
-               (not Splayset.isempty  !freezeWorklist) orelse (not Splayset.isempty !spillWorklist))
-        do (if (not Splayset.isempty !simplifyWorklist) then Simplify()
-            else if (not Splayset.isempty !worklistMoves) then Coalesce()
-            else if (not Splayset.isempty !freezeWorklist) then Freeze()
-            else if (not Splayset.isempty !spillWorklist) then SelectSpill()
-           );
-        AssignColors();
-        if (not Splayset.isempty !spilledNodes)
-        then Main(RewriteProgram())
-      in
-        ()
-      end
+  fun debug (instrs,alloc,table) = print("Completar debug en tigercolor\n")
 
-  in
-    Main instr;
-  end
 end
-*)

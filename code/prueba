@@ -13,6 +13,7 @@ load "tigerliveness";
 load "String";
 load "Splaymap";
 load "Int";
+load "tigercolor";
 
 (* Creando lista de instrucciones para probar tigerFlow y tigerLiveness*)
 val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=[],jump=NONE},           (* c <- 2 *)
@@ -42,16 +43,33 @@ val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=[],jump=NONE}
               tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="c"}                       (* d <- c *)
              ];
 
-(* Otro ejemplo del libro *)
+(* Otro ejemplo del libro 
+   Solo se tienen en cuenta los dst y src (las instrucciones assem no representan nada) *)
 val instrs = [tigerassem.IOPER{assem="movq $2, %'d0",dst=["b"],src=[],jump=NONE},           (* b <- 2 *)
               tigerassem.IOPER{assem="movq $2, %'d0",dst=["a"],src=["b"],jump=NONE},        (* a <- b * b *)
               tigerassem.IOPER{assem="movq $2, %'d0",dst=["c"],src=["a","b"],jump=NONE},    (* c <- a + b *)
-              tigerassem.IOPER{assem="cmpq %'s0, '%'d0",dst=[],src=["a","b"],jump=NONE},    (* if a >= b goto L1 *)
+              tigerassem.IOPER{assem="cmpq %'s0, '%'s1",dst=[],src=["a","b"],jump=NONE},    (* if a >= b goto L1 *)
               tigerassem.IOPER{assem="jle 'j0",dst=[],src=[],jump=SOME ["L1","L2"]},
               tigerassem.ILABEL{assem="L1:",lab="L1"},                                      (* L1: *)
               tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="a"},                      (* d <- a *)
               tigerassem.ILABEL{assem="L2:",lab="L2"},                                      (* L2: *)
               tigerassem.IMOVE{assem="movq $0, %'d0",dst="d",src="c"}                       (* d <- c *)
+             ];
+
+(* Ejemplo libro coloreo *)
+val instrs = [tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="c",src="r3"},                   (* c <- r3 *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="a",src="r1"},                   (* a <- r1 *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="b",src="r2"},                   (* b <- r2 *)
+              tigerassem.IOPER{assem="movq $0, %'d0",dst=["d"],src=[],jump=NONE},           (* d <- 0 *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="e",src="a"},                    (* e <- a *)
+              tigerassem.ILABEL{assem="loop:",lab="loop"},                                  (* loop: *)
+              tigerassem.IOPER{assem="addq %'s1, %'d0",dst=["d"],src=["d","b"],jump=NONE},  (* d <- d + b *)
+              tigerassem.IOPER{assem="subq $1, %'d0",dst=["e"],src=["e"],jump=NONE},        (* e <- e - 1 *)
+              tigerassem.IOPER{assem="cmpq $0, %'s0",dst=[],src=["e"],jump=NONE},          (* if e > 0 goto loop *)
+              tigerassem.IOPER{assem="jle 'j0",dst=[],src=[],jump=SOME ["loop","sigue"]},
+              tigerassem.ILABEL{assem="sigue:",lab="sigue"},                                (* sigue: *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="r1",src="d"},                   (* r1 <- d *)
+              tigerassem.IMOVE{assem="movq %'s0, %'d0",dst="r3",src="c"}                    (* r3 <- c *)
              ];
 
 (* Probando tigerGraph *)
@@ -124,3 +142,8 @@ fun printLiveOut lo =
   end;
 
 val _ = printLiveOut liveOut;
+
+
+(* Probando tigerColor *)
+val frame = tigerframe.newFrame {name="prueba",formals=[true]};
+val (instrucciones,alloc,table) = tigercolor.color (instrs,frame);
