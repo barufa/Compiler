@@ -194,7 +194,7 @@ fun color (instr, frame) =
                                                 in () end) (!initial)
 *)
 
-    fun Adjacent n = Splayset.intersection(GetAdjList n,Splayset.union(!selectStackSet,!coalescedNodes))
+    fun Adjacent n = Splayset.difference(GetAdjList n,Splayset.union(!selectStackSet,!coalescedNodes))
 
     fun EnableMoves nodes = Splayset.app (fn n => Splayset.app (fn m => if (Splayset.member(!activeMoves,m)) then (activeMoves := Splayset.delete(!activeMoves,m);worklistMoves := Splayset.add(!worklistMoves,m)) else ()) (NodeMoves n)) nodes
 
