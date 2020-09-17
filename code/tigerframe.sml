@@ -32,12 +32,6 @@ type register = string
 datatype frag = PROC of {body: tigertree.stm, frame: frame}
 	| STRING of tigertemp.label * string
 
-(* COMPLETAR registros *)
-val rv = "rax"      (* return value  *)
-val fp = "rbp"      (* frame pointer *)
-val sp = "rsp"      (* stack pointer *)
-val ov  = "rdx"     (* overflow value *)
-
 val fpPrev = 0				 (* offset (bytes) *)
 val fpPrevLev = 16	         (* offset (bytes) *)
 val wSz = 8				     (* word size in bytes *)
@@ -51,23 +45,25 @@ val log2WSz = 3				 (* base two logarithm of word size in bytes *)
 val localsInicial = 0	 (* words *)
 val localsGap = ~4 		 (* bytes *)
 
+(* COMPLETAR registros *)
+val rv = "rax"      (* return value  *)
+val fp = "rbp"      (* frame pointer *)
+val sp = "rsp"      (* stack pointer *)
+(* val ov  = "rdx"  (* overflow value *) *)
 (* Revisar callersaves*)
-val specialregs = [rv, fp, sp]                                                    (* special purpose registers *)
-val argsregs = ["rdi", "rsi", "rdx", "rcx", "r8", "r9"]                           (* registers that hold arguments *)
-val callersaves = []                                                              (* registers that must be preserved by the caller *)
-val calleesaves = ["rbx", "rbp", "rsp", "r10", "r11", "r12", "r13", "r14", "r15"] (* registers that must be preserved by the callee *)
-val calldefs    = [rv] @ argsregs @ callersaves                                   (* registers possibly written by the callee *)
-val machineregs = specialregs @ argsregs @ callersaves @ calleesaves              (* all registers available for coloring *)
+val specialregs = [fp, sp]                                                        (* special purpose registers *)
+val argsregs = ["rdi", "rsi", "rcx", "rdx", "r8", "r9"]                           (* registers that hold arguments *)
+val callersaves = ["rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9"]                 (* registers that must be preserved by the caller *)
+val calleesaves = ["rbx", "r10", "r11", "r12", "r13", "r14", "r15"]               (* registers that must be preserved by the callee *)
+val machineregs = callersaves @ calleesaves                                       (* all registers available for coloring *)
 
 fun allocMem(k) = InFrame k
 
 fun allocLocal (f: frame) b =
 	case b of
 	  true =>
-		let
-			val ret = InFrame(!(#actualLocal f)*wSz+localsGap)
-			val _ = #actualLocal f:=(!(#actualLocal f)-1)
-		in ret end
+		let val _ = #actualLocal f:=(!(#actualLocal f)+1)
+		in InFrame(!(#actualLocal f)*wSz+localsGap) end
 	| false => InReg(tigertemp.newtemp())
 val allocArg = allocLocal
 
@@ -87,25 +83,43 @@ fun acclist({accesslist=l, ...}:frame,acc: access) = let val _ = l:=(!l@[acc]) i
 
 fun string(l, s) = l^tigertemp.makeString(s)^"\n"
 fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
-	| exp(InReg l) e = TEMP l
+  | exp(InReg l)   e = TEMP l
+fun build_seq [] = EXP (CONST 0)
+  | build_seq [s] = s
+  | build_seq (x::xs) = SEQ (x, build_seq xs)
 fun externalCall(s, l) = CALL(NAME s, l)
 
-fun procEntryExit1 (frame,body) = body (*COMPLETAR*)
+fun procEntryExit1 (f: frame,body) = (*COMPLETADO*)
+    let val frame_name = (name f)
+        fun move_args [] _     = []
+          | move_args (x::xs) n = let val argsregs_size = List.length argsregs
+                                     val dst = if n < argsregs_size then TEMP (List.nth(argsregs,n))
+                                               else MEM(BINOP(PLUS, CONST ((n-argsregs_size)*8+16), TEMP fp))
+                                 in MOVE(exp x fp, dst) :: (move_args xs (n+1))  end
+        val args_connect = [COMMENT("Cargando los argumentos")] @ (move_args (!(#accesslist f)) 0)
+        val new_temps = List.tabulate(List.length calleesaves , fn _ => TEMP (tigertemp.newtemp()))
+        val save_calleesaves = if frame_name = "_tigermain" then [] (*Es necesario guardar los callesaves? No se hace durante el coloreo?*)
+                               else [COMMENT("Guardando registros calleesaves")] @ List.map MOVE(ListPair.zip(new_temps,List.map TEMP calleesaves))
+        val restore_calleesaves = if frame_name = "_tigermain" then []
+                                  else [COMMENT("Restaurando registros calleesaves")] @ List.map MOVE(ListPair.zip(List.map TEMP calleesaves,new_temps))
+    in build_seq(save_calleesaves @ args_connect @ [body] @ restore_calleesaves) end
 
 fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
-	instr @ [tigerassem.IOPER {assem = "",dst = [rv,sp,fp] @ calleesaves,src = [],jump = NONE}]
+	instr @ [tigerassem.IOPER {assem = "",dst = callersaves,src = calleesaves,jump = NONE}]
 
-fun procEntryExit3 (frame,body) =(*COMPLETADO*)
-  let 
-    val tam = !(#actualLocal frame) * wSz 
-    val size = if tam mod 16 = 0 then tam else tam + wSz (*Tamaño del frame*)
+fun procEntryExit3 (frame,instr) =(*COMPLETADO*)
+  let
+    val tam = (!(#actualLocal frame) * wSz)
+    val size = ((tam + 15) div 16) * 16 (*Tamaño del frame*)
   in {prolog = ".global " ^ name(frame) ^ "\n" ^
                  "\t" ^ name(frame) ^ ":\n" ^
+                 "#Prologo\n" ^
                  "\tpushq %rbp\n" ^
                  "\tmovq %rsp, %rbp\n" ^
-                 "\tsubq $" ^ Int.toString(size) ^", %rbp\n\n",
-      body = body,
-      epilog = "\tmovq %rbp, %rsp\n" ^
+                 "\tsubq $" ^ Int.toString(size) ^", %rsp\n#Cuerpo\n",
+      body = instr,
+      epilog = "#Epilogo\n" ^
+               "\tmovq %rbp, %rsp\n" ^
                "\tpopq %rbp\n" ^
                "\tret\n\n"}
   end

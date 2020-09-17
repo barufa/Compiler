@@ -10,7 +10,6 @@ datatype frag = PROC of {body: tigertree.stm, frame: frame}
 
 (* Algunos registros especiales *)
 val rv  : tigertemp.temp
-val ov  : tigertemp.temp
 val fp  : tigertemp.temp
 val sp  : tigertemp.temp
 
@@ -20,7 +19,6 @@ val fpPrevLev : int
 val wSz : int
 val log2WSz : int
 val argsregs : tigertemp.temp list
-val calldefs : tigertemp.temp list
 val callersaves : tigertemp.temp list
 val calleesaves : tigertemp.temp list
 val machineregs : tigertemp.temp list
