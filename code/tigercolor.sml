@@ -18,7 +18,7 @@ fun color (instr, frame) =
        los nuevos temporarios creados en RewriteProgram un costo de 2. *)
     val spillCost: (tigertemp.temp,int) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
     val registers: tigerframe.register list = tigerframe.machineregs
-    val registers = ["r1","r2","r3","r4"]
+    val registers = ["r1","r2"]
 
     (* Estructuras de datos *)
     val precolored: tigerframe.register Splayset.set ref= ref (Splayset.addList(Splayset.empty String.compare,registers))
@@ -133,6 +133,11 @@ fun color (instr, frame) =
         false => minSpillCost (Splayset.listItems (!spillWorklist))
         | true => raise Fail ("spillWorklist esta vacio")
 
+    fun getItemToSimplify () = 
+      case Splayset.isEmpty(!simplifyWorklist) of
+        false => minSpillCost (Splayset.listItems (!simplifyWorklist))
+        | true => raise Fail ("simplifyWorklist esta vacio")
+
       (* Funciones del libro *)
     fun AddEdge (u,v) =
       if ((not(Splayset.member(!adjSet,(u,v)))) andalso (not(String.compare (u,v) = EQUAL)))
@@ -142,7 +147,7 @@ fun color (instr, frame) =
             then (adjList := Splaymap.insert(!adjList,u,(Splayset.add((GetAdjList u),v)));
                   degree := Splaymap.insert(!degree,u,((GetDegree u) + 1)))
             else ();
-           if (not(Splayset.member(!precolored,v)))
+            if (not(Splayset.member(!precolored,v)))
             then (adjList := Splaymap.insert(!adjList,v,(Splayset.add((GetAdjList v),u)));
                   degree := Splaymap.insert(!degree,v,((GetDegree v) + 1)))
             else ())
@@ -150,7 +155,6 @@ fun color (instr, frame) =
 
     fun Build instrs =
       let
-        val live = ref (Splaymap.foldl (fn (key,value,set) => Splayset.union(value,set)) (Splayset.empty String.compare) (!liveOut))
         fun getDst inst = case inst of
                              IOPER {assem,dst,src,jump} => Splayset.addList(Splayset.empty String.compare,dst)
                            | IMOVE {assem,dst,src} => Splayset.add(Splayset.empty String.compare,dst)
@@ -162,23 +166,38 @@ fun color (instr, frame) =
         fun isMove inst = case inst of
                              IMOVE {...} => true
                            | _ => false
-        fun aux (ILABEL{...}) = ()
-        | aux inst =
+        fun aux (ILABEL{...},n) = ()
+        | aux (inst,n) =
           let
             val def_I = getDst inst
             val use_I = getSrc inst
+            val liveO_I = Splaymap.find(!liveOut,n)
           in
             if (isMove inst) (* Si es una instruccion move, def_I y use_I tienen un solo elemento *)
-            then (live := Splayset.difference(!live,use_I);
+            then (
                   moveList := Splaymap.insert(!moveList,getItem def_I,Splayset.add(GetMoveList (getItem def_I),(getItem def_I,getItem use_I)));
                   moveList := Splaymap.insert(!moveList,getItem use_I,Splayset.add(GetMoveList (getItem use_I),(getItem def_I,getItem use_I)));
                   worklistMoves := Splayset.add(!worklistMoves,(getItem def_I,getItem use_I)))
             else ();
-            live := Splayset.union(!live,def_I);
-            Splayset.app (fn d => Splayset.app (fn l => AddEdge(l, d)) (!live)) def_I;
-            live := Splayset.union(use_I,Splayset.difference(!live,def_I))
+            Splayset.app (fn d => Splayset.app (fn l => AddEdge(l,d)) (liveO_I)) def_I
           end
-        val _ = List.app (fn i => aux i) (List.rev instrs)
+          fun listToN a b = 
+            case Int.compare(a,b) of
+              EQUAL => [b]
+              | LESS => a::listToN (a+1) b
+              | GREATER => raise Fail "No deberia pasar"
+          val _ = List.app (fn (i,n) => aux (i,n)) (ListPair.zip (instrs,listToN 1 (List.length instrs)))
+(* Eliminar abajo *)
+        val _ = print("adjList:\n")
+        fun printList x = print(x^",")
+        fun printAdjList t set = (print(" -"^t^" --> ");Splayset.app printList set;print("\n"))
+        val _ = Splaymap.app (fn (t,set) => printAdjList t set) (!adjList)
+
+        val _ = print("Degree: ")
+        fun printDegree (t,n) = print(t^" --> "^Int.toString n^",")
+        val _ = Splaymap.app printDegree (!degree)
+        val _ = print("\n")
+(* Eliminar arriba *)
       in () end
 
     fun NodeMoves n = Splayset.intersection(GetMoveList n,Splayset.union(!activeMoves,!worklistMoves))
@@ -212,9 +231,9 @@ fun color (instr, frame) =
         else ()
       end
 
-    fun Simplify () = 
+    fun Simplify () =
       let
-        val n = getItem (!simplifyWorklist)
+        val n = getItemToSimplify()
         val _ = print("Simplify de "^n^"\n")
       in 
         simplifyWorklist := Splayset.delete(!simplifyWorklist,n);
@@ -324,8 +343,10 @@ fun color (instr, frame) =
             val okColors = ref (Splayset.addList(Splayset.empty String.compare,registers))
             val _ = Splayset.app (fn w => if Splayset.member(Splayset.union(!coloredNodes,!precolored),GetAlias w) then (okColors := Splayset.difference(!okColors,stringToSet (GetColor(GetAlias(w))))) else ()) (GetAdjList n)
             val _ = if Splayset.isEmpty(!okColors)
-                    then (spilledNodes := Splayset.add(!spilledNodes,n))
-                    else (coloredNodes := Splayset.add(!coloredNodes,n);
+                    then (print("Moviendo \""^n^"\" a spilledNodes\n");
+                          spilledNodes := Splayset.add(!spilledNodes,n))
+                    else (print("Asignandole un color a \""^n^"\"\n");
+                          coloredNodes := Splayset.add(!coloredNodes,n);
                           color := Splaymap.insert(!color,n,getItem (!okColors))) 
           in () end
         fun colorCoalesced n = if not(Splayset.member(!spilledNodes,GetAlias n))
