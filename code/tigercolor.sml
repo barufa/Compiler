@@ -13,9 +13,11 @@ fun color (instr, frame) =
     (*  *)
     val interference: tigerliveness.igraph ref = ref ({graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]})
     val liveOut: (tigergraph.node,tigertemp.temp Splayset.set) Splaymap.dict ref = ref (Splaymap.mkDict Int.compare)
-    val spillCost: (tigergraph.node,int) Splaymap.dict ref = ref (Splaymap.mkDict Int.compare)
+    (* Implementamos una heuristica simple donde los temporarios originales del programa tienen costo 1 y
+       los nuevos temporarios creados en RewriteProgram un costo de 2. *)
+    val spillCost: (tigertemp.temp,int) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
     val registers: tigerframe.register list = tigerframe.machineregs
-    val registers = ["r1","r2","r3"]
+    val registers = ["r1","r2","r3","r4"]
 
     (* Estructuras de datos *)
     val precolored: tigerframe.register Splayset.set ref= ref (Splayset.addList(Splayset.empty String.compare,registers))
@@ -103,6 +105,32 @@ fun color (instr, frame) =
     fun GetColor n = case (Splaymap.peek(!color,n)) of
                       SOME c => c
                       | NONE => raise Fail "tigercolor.sml: este temporario no tiene color asignado"
+
+    fun addSpillCost temp cost =
+      case Splaymap.peek(!spillCost,temp) of
+        SOME _ => ()
+        | NONE => spillCost := Splaymap.insert(!spillCost,temp,cost)
+
+    fun getSpillCost temp =
+      case Splaymap.peek(!spillCost,temp) of
+        SOME n => n
+        | NONE => raise Fail ("El temporario "^temp^" no esta en spillCost")
+
+    fun minSpillCost temps =
+      let
+        fun pertenece (x::xs) (t,c) = if String.compare(x,t) = EQUAL then true else pertenece xs (t,c)
+        | pertenece [] _ = false
+        val filter = List.filter (pertenece temps) (Splaymap.listItems (!spillCost))
+        (* Asumo que el costo no va a llegar a 123456789 *)
+        fun getMin ((t,c)::xs) _ (12346789) = getMin xs t c
+        | getMin ((t,c)::xs) tmin cmin = if c < cmin then getMin xs t c else getMin xs tmin cmin
+        | getMin [] tmin _ = tmin
+      in getMin filter ("") (123456789) end
+
+    fun getItemToSpill () =
+      case Splayset.isEmpty(!spillWorklist) of
+        false => minSpillCost (Splayset.listItems (!spillWorklist))
+        | true => raise Fail ("spillWorklist esta vacio")
 
       (* Funciones del libro *)
     fun AddEdge (u,v) =
@@ -325,7 +353,7 @@ fun color (instr, frame) =
     fun SelectSpill () =
       let
         val _ = print("    Entrando a la funcion SelectSpill\n")
-        val m = getItem (!spillWorklist)
+        val m = getItemToSpill()
       in
         spillWorklist := Splayset.delete(!spillWorklist,m);
         simplifyWorklist := Splayset.add(!simplifyWorklist,m);
@@ -425,6 +453,8 @@ fun color (instr, frame) =
         fun proccess (temp,inst) =
           let
             val (ilist,dlist,ulist) = addNewTemps inst temp ([],[],[])
+            (* Agregamos los nuevos temporarios a la funcion spillCost con costo 2(es el costo mayor en este caso) *)
+            val _ = List.app (fn t => addSpillCost t 2) (dlist @ ulist)
             val ilist = addStore ilist temp [] dlist
             val ilist = addLoad ilist temp [] ulist
 
@@ -453,10 +483,15 @@ fun color (instr, frame) =
         val {control, def, use, ismove} = fgraph
         val _ = interference := ig
         val _ = liveOut := lo
-        (* Inicializamos initial con todos los temporales*)
-        val _ = List.app (fn n => List.app (fn t => initial := Splayset.add(!initial,t)) (Splaymap.find(def,n) @ Splaymap.find(use,n))) nodes
-        (* Eliminamos de initial los temporales precoloreados *)
-        val _ = Splayset.app (fn t => if Splayset.member(!initial,t) then (initial := Splayset.delete(!initial,t)) else ()) (!precolored)
+        (* Calculamos todos los temporarios que se usan en instrs *)
+        val temps = List.foldl (fn (n,set) => Splayset.addList(set,Splaymap.find(def,n) @ Splaymap.find(use,n))) (Splayset.empty String.compare) nodes
+        (* Eliminamos de temps los temporarios precoloreados *)
+        val temps = Splayset.difference(temps,!precolored)
+        (* Inicializamos initial con los temporales*)
+        val _ = Splayset.app (fn t => initial := Splayset.add(!initial,t)) temps
+        (* Agregamos los temporales a spillCost con costo 1.
+           Si ya estan en spillCost no se modifica para no pisar los costos en las llamadas recursivas. *)
+        val _ = Splayset.app (fn t => addSpillCost t 1) temps
         val _ = print("    Saliendo de la funcion LivenessAnalysis\n")
       in () end
 
@@ -468,7 +503,6 @@ fun color (instr, frame) =
         val _ = print("    Entrando a la funcion Init\n")
         (* val _ = interference := {graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]} *)
         val _ = liveOut := Splaymap.mkDict Int.compare
-        val _ = spillCost := Splaymap.mkDict Int.compare
         (* val _ = registers: tigerframe.register list = tigerframe.machineregs *)
         (* val _ = precolored := Splayset.addList(Splayset.empty String.compare,registers) *)
         val _ = initial := Splayset.empty String.compare
@@ -534,6 +568,25 @@ fun color (instr, frame) =
     (instrucciones,!color,!spillTable)
   end
 
-  fun debug (instrs,alloc,table) = print("Completar debug en tigercolor\n")
+  fun debug (instrs,alloc,table) =
+    let
+          val _ = print("#################################\n")
+          val _ = print("Mostrando las instrucciones:\n")
+          fun printInstr i = tigerassem.formatCode i
+          val _ = List.app printInstr instrs
+          val _ = print("#################################\n")
+          val _ = print("Mostrando la informacion de la spillTable:\n")
+          val _ = print("La informacion se mostrara de la siguiente manera:\n")
+          val _ = print("-Temporario --> Memoria\n")
+          fun printItem (a,b) = print(a^" --> "^b^"\n")
+          val _ = List.app printItem (Splaymap.listItems table)
+          val _ = print("#################################\n")
+          val _ = print("Mostrando el resultado de la allocacion\n")
+          val _ = print("La informacion se mostrara de la siguiente manera:\n")
+          val _ = print("-Temporario --> Registro\n")
+          fun printAlloc (t,r) = print(t^" --> "^r^"\n")
+          val _ = List.app printAlloc (Splaymap.listItems alloc)
+          val _ = print("#################################\n")
+    in () end
 
 end
