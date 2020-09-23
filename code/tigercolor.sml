@@ -187,17 +187,6 @@ fun color (instr, frame) =
               | LESS => a::listToN (a+1) b
               | GREATER => raise Fail "No deberia pasar"
           val _ = List.app (fn (i,n) => aux (i,n)) (ListPair.zip (instrs,listToN 1 (List.length instrs)))
-(* Eliminar abajo *)
-        val _ = print("adjList:\n")
-        fun printList x = print(x^",")
-        fun printAdjList t set = (print(" -"^t^" --> ");Splayset.app printList set;print("\n"))
-        val _ = Splaymap.app (fn (t,set) => printAdjList t set) (!adjList)
-
-        val _ = print("Degree: ")
-        fun printDegree (t,n) = print(t^" --> "^Int.toString n^",")
-        val _ = Splaymap.app printDegree (!degree)
-        val _ = print("\n")
-(* Eliminar arriba *)
       in () end
 
     fun NodeMoves n = Splayset.intersection(GetMoveList n,Splayset.union(!activeMoves,!worklistMoves))
@@ -220,11 +209,11 @@ fun color (instr, frame) =
     fun DecrementDegree m = 
       let
         val d = GetDegree m
-      in 
+      in
         degree := Splaymap.insert(!degree,m,d-1);
         if (d=K)
         then (EnableMoves(Splayset.add(Adjacent m,m));
-              spillWorklist := Splayset.delete(!spillWorklist,m);
+              spillWorklist := Splayset.difference(!spillWorklist,stringToSet m);
               if (MoveRelated m)
               then (freezeWorklist := Splayset.add(!freezeWorklist,m))
               else (simplifyWorklist := Splayset.add(!simplifyWorklist,m)))
