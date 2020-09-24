@@ -32,20 +32,13 @@ fun fillreg (x::xs) src dst jmp =
         if x<>(#"'") then Char.toCString(x)^(fillreg xs src dst jmp)
         else let val (n,ys) = stint(List.tl(xs))
                          val ls = (case List.hd(xs) of
-                                                        #"s" => src
+                                                      #"s" => src
                                                     | #"d" => dst
                                                     |  jl  => jmp)
                     in List.nth(ls,n)^(fillreg ys src dst jmp) end
   | fillreg [] _ _ _ = ""
 
 (**********************************************)
-
-fun format mapRegister (IOPER{assem,dst,src,jump}) = assem^" \n"
-  | format mapRegister (ILABEL{assem,...}) = assem^": "
-  | format mapRegister (IMOVE{assem,dst,src}) = assem^" \n"
-(*
-  | format _           _ = raise Fail "format: Caso no contemplado"
-*)
 
 fun formatCode (IOPER{assem,src,dst,jump}) =
             let val jmp = if jump = NONE then [] else valOf jump
@@ -58,6 +51,18 @@ fun formatCode (IOPER{assem,src,dst,jump}) =
             print(assem^"\n")
 (*
   | formatCode _                           = raise Fail "format: Caso no contemplado"
+*)
+
+fun format mapRegister (ILABEL{assem,lab}) = assem
+  | format mapRegister (IMOVE{assem,dst,src}) = let val s = fillreg (String.explode assem) [mapRegister src] [mapRegister dst] []
+                                                in s end
+  | format mapRegister (IOPER{assem,dst,src,jump}) = let val rsrc = List.map mapRegister src
+                                                         val rdst = List.map mapRegister dst
+                                                         val jmp = if jump = NONE then [] else valOf jump
+                                                         val s = fillreg (String.explode assem) rsrc rdst jmp
+                                                      in s end
+(*
+  | format _           _ = raise Fail "format: Caso no contemplado"
 *)
 
 fun showCode (ILABEL{assem,...}) = assem

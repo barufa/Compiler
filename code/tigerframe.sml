@@ -89,8 +89,8 @@ fun build_seq [] = EXP (CONST 0)
   | build_seq (x::xs) = SEQ (x, build_seq xs)
 fun externalCall(s, l) = CALL(NAME s, l)
 
-fun procEntryExit1 (f: frame,body) = body(*COMPLETADO*)
-    (*let val frame_name = (name f)
+fun procEntryExit1 (f: frame,body) = (*body*)(*COMPLETADO*)
+    let val frame_name = (name f)
         fun move_args [] _     = []
           | move_args (x::xs) n = let val argsregs_size = List.length argsregs
                                      val dst = if n < argsregs_size then TEMP (List.nth(argsregs,n))
@@ -102,7 +102,7 @@ fun procEntryExit1 (f: frame,body) = body(*COMPLETADO*)
                                else [COMMENT("Guardando registros calleesaves")] @ List.map MOVE(ListPair.zip(new_temps,List.map TEMP calleesaves))
         val restore_calleesaves = if frame_name = "_tigermain" then []
                                   else [COMMENT("Restaurando registros calleesaves")] @ List.map MOVE(ListPair.zip(List.map TEMP calleesaves,new_temps))
-    in build_seq(save_calleesaves @ args_connect @ [body] @ restore_calleesaves) end*)
+    in build_seq(save_calleesaves @ args_connect @ [body] @ restore_calleesaves) end
 
 fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
 	instr @ [tigerassem.IOPER {assem = "",dst = callersaves,src = calleesaves,jump = NONE}]
