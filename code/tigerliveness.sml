@@ -69,7 +69,27 @@ fun interferenceGraph ({control,def,use,ismove}:tigerflow.flowgraph) =
 
 fun debugGraph {graph,tnode,gtemp,moves} =
   let
-    fun graphInfo g = tigergraph.debugGraph g
+    fun findDic dic key = Splaymap.find(dic,key)
+    fun mapNode n = findDic gtemp n
+(* No utilizamos la funcion de debug de tigergraph para poder mostrar la informacion
+   en funcion de los temporarios y no nodos *)
+    fun graphInfo g =
+      let
+        val _ = print("Imprimiendo informacion del grafo\n")
+        fun infoNode n =
+          let
+            val _ = print("  -Nodo "^mapNode n^":\n")
+            fun f a = print(mapNode a^",")
+            val _ = print("    -Pred: ")
+            val _ = List.app f (tigergraph.pred g n)
+            val _ = print("\n")
+            val _ = print("    -Succ: ")
+            val _ = List.app f (tigergraph.succ g n)
+            val _ = print("\n")
+          in () end
+      in
+        List.app infoNode (tigergraph.nodes g)
+      end
   in
     print("###############################################\n");
     graphInfo graph;
@@ -92,8 +112,6 @@ fun debugMaps {graph,tnode,gtemp,moves} =
   in
     print("###############################################\n");
     print("Mostrando mapeos de nodos con temporarios\n");
-    print("La informacion se mostrara de la siguiente manera:\n");
-    print("-Nodo: Temporario\n");
     mapsInfo gtemp;
     print("\n")
   end
