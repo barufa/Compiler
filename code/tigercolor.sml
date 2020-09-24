@@ -18,7 +18,6 @@ fun color (instr, frame) =
        los nuevos temporarios creados en RewriteProgram un costo de 2. *)
     val spillCost: (tigertemp.temp,int) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
     val registers: tigerframe.register list = tigerframe.machineregs
-    val registers = ["r1","r2"]
 
     (* Estructuras de datos *)
     val precolored: tigerframe.register Splayset.set ref= ref (Splayset.addList(Splayset.empty String.compare,registers))
@@ -82,11 +81,7 @@ fun color (instr, frame) =
                           SOME v => v
                           | NONE => Splayset.empty edgeCmp
 
-    fun PushSelectStack n = (* tigerpila.pushPila selectStack n;selectStackSet := Splayset.add(!selectStackSet,n) *)
-      let
-        val _ = tigerpila.pushPila selectStack n
-        val _ = selectStackSet := Splayset.add(!selectStackSet,n)
-      in () end
+    fun PushSelectStack n =  (tigerpila.pushPila selectStack n;selectStackSet := Splayset.add(!selectStackSet,n))
 
     fun PopSelectStack () =
       let
@@ -420,14 +415,6 @@ fun color (instr, frame) =
             val _ = List.app (fn t => addSpillCost t 2) (dlist @ ulist)
             val ilist = addStore ilist temp [] dlist
             val ilist = addLoad ilist temp [] ulist
-
-            val _ = print("#################################\n")
-            val _ = print("SPILL: "^temp^" --> "^mapSpillNode temp^"\n")
-            val _ = print("Instrucciones:\n")
-            fun printInstr i = tigerassem.formatCode i
-            val _ = List.app printInstr ilist
-            val _ = print("#################################\n")
-
           in ilist end
         (* Agregamos los temporarios que se van a mover a memoria a la tabla de temporarios derramados *)
         val _ = List.app (fn t => spillNewNode t) (Splayset.listItems (!spilledNodes))
@@ -461,10 +448,7 @@ fun color (instr, frame) =
     la funcion color *)
     fun Init () =
       let
-        (* val _ = interference := {graph=tigergraph.newGraph(), tnode=Splaymap.mkDict String.compare, gtemp=Splaymap.mkDict Int.compare, moves=[]} *)
         val _ = liveOut := Splaymap.mkDict Int.compare
-        (* val _ = registers: tigerframe.register list = tigerframe.machineregs *)
-        (* val _ = precolored := Splayset.addList(Splayset.empty String.compare,registers) *)
         val _ = initial := Splayset.empty String.compare
         val _ = simplifyWorklist := Splayset.empty String.compare
         val _ = freezeWorklist := Splayset.empty String.compare
@@ -486,7 +470,6 @@ fun color (instr, frame) =
         val _ = moveList := Splaymap.mkDict String.compare
         val _ = alias := Splaymap.mkDict String.compare
         val _ = color := Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) (!precolored)
-        (* val _ = K: int = Splayset.numItems !precolored *)
       in () end
 
     fun Main instrs = 
@@ -509,18 +492,9 @@ fun color (instr, frame) =
         inst
       end
 
-    val _ = print("#################################\n")
-    val _ = print("Instrucciones:\n")
-    fun printInstr i = tigerassem.formatCode i
-    val _ = List.app printInstr instr
-    val _ = print("SpillTable:\n")
-    fun printItem (a,b) = print(a^" --> "^b^"\n")
-    val _ = List.app printItem (Splaymap.listItems (!spillTable))
-    val _ = print("#################################\n")
-
     val instrucciones = Main instr
     val _ = print("Fin del coloreo\n")
-    val _ = print("\n#####################################\n")
+    val _ = print("#####################################\n")
   in
     (instrucciones,!color,!spillTable)
   end
@@ -533,14 +507,10 @@ fun color (instr, frame) =
           val _ = List.app printInstr instrs
           val _ = print("#################################\n")
           val _ = print("Mostrando la informacion de la spillTable:\n")
-          val _ = print("La informacion se mostrara de la siguiente manera:\n")
-          val _ = print("-Temporario --> Memoria\n")
           fun printItem (a,b) = print(a^" --> "^b^"\n")
           val _ = List.app printItem (Splaymap.listItems table)
           val _ = print("#################################\n")
           val _ = print("Mostrando el resultado de la allocacion\n")
-          val _ = print("La informacion se mostrara de la siguiente manera:\n")
-          val _ = print("-Temporario --> Registro\n")
           fun printAlloc (t,r) = print(t^" --> "^r^"\n")
           val _ = List.app printAlloc (Splaymap.listItems alloc)
           val _ = print("#################################\n")
