@@ -1,0 +1,17 @@
+let
+    var a:=1
+    var b:=2
+    var c:=3
+    var d:=4
+    var e:=5
+    var g:=6
+    var h:=7
+    var i:=8
+    var j:=9
+    var k:=10
+    function f(a1:int,a2:int,a3:int,a4:int,a5:int,a6:int,a7:int,a8:int,a9:int,a10:int):int = 
+       (for i := 1 to (a1+a2+a3+a4+a5+a6+a7+a8+a9+a10)
+	 do (print ("*"));
+	print("\n");1)
+in f(a,b,c,d,e,g,h,i,j,k) end
+

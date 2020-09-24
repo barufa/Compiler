@@ -20,7 +20,8 @@ fun tree s0 =
 			indent(d+1)^say(t)^say(",")^say(f)^say(")")
 		| stm(MOVE(a,b),d) = indent(d)^sayln("MOVE(")^exp(a,d+1)^
 			sayln(",")^exp(b,d+1)^say(")")
-		| stm(EXP e, d) = indent(d)^sayln("EXP(")^exp(e,d+1)^say(")")
+        | stm(EXP e, d) = indent(d)^sayln("EXP(")^exp(e,d+1)^say(")")
+        | stm(COMMENT c, d) = indent(d)^sayln("#")^c    
 		and exp(BINOP(p,a,b),d) = indent(d)^say("BINOP(")^binop(p)^sayln(",")^
 			exp(a,d+1)^sayln(",")^exp(b,d+1)^say(")")
 		| exp(MEM(e),d) = indent(d)^sayln("MEM(")^exp(e,d+1)^say(")")
@@ -57,4 +58,3 @@ fun tree s0 =
  in	stm(s0,0)^sayln("") end
 
 end
-

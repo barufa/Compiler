@@ -216,6 +216,8 @@ string *getstr()
     else
 		return (string*)(consts + i);
 }
+
+int _tigermain(int);
 int main()
 {
     int i;
