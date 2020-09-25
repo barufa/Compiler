@@ -19,6 +19,14 @@ datatype instr = IOPER of {assem: string,
  Pagina 201
 *)
 
+(* Funcion para mapear el temporario a su registro correspondiente a traves del diccionario dic.
+   Si temp no esta en dic, se devuelve el mismo temp.(Asi para cuando no se realizo el coloreo todavia
+   con un diccionario vacio simula el mapeo identidad) *)
+fun finDic dic temp =
+  case Splaymap.peek(dic,temp) of
+    SOME v => v
+    | NONE => temp
+
 (* Para que muestre los registros temporarios*)
 
 fun stint2 (x::xs) ns =
