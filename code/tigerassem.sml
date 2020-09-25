@@ -22,7 +22,7 @@ datatype instr = IOPER of {assem: string,
 (* Funcion para mapear el temporario a su registro correspondiente a traves del diccionario dic.
    Si temp no esta en dic, se devuelve el mismo temp.(Asi para cuando no se realizo el coloreo todavia
    con un diccionario vacio simula el mapeo identidad) *)
-fun finDic dic temp =
+fun findDic dic temp =
   case Splaymap.peek(dic,temp) of
     SOME v => v
     | NONE => temp
@@ -62,10 +62,10 @@ fun formatCode (IOPER{assem,src,dst,jump}) =
 *)
 
 fun format mapRegister (ILABEL{assem,lab}) = assem
-  | format mapRegister (IMOVE{assem,dst,src}) = let val s = fillreg (String.explode assem) [mapRegister src] [mapRegister dst] []
+  | format mapRegister (IMOVE{assem,dst,src}) = let val s = fillreg (String.explode assem) [findDic mapRegister src] [findDic mapRegister dst] []
                                                 in s end
-  | format mapRegister (IOPER{assem,dst,src,jump}) = let val rsrc = List.map mapRegister src
-                                                         val rdst = List.map mapRegister dst
+  | format mapRegister (IOPER{assem,dst,src,jump}) = let val rsrc = List.map (findDic mapRegister) src
+                                                         val rdst = List.map (findDic mapRegister) dst
                                                          val jmp = if jump = NONE then [] else valOf jump
                                                          val s = fillreg (String.explode assem) rsrc rdst jmp
                                                       in s end

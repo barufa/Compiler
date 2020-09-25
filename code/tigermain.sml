@@ -67,7 +67,7 @@ fun main(args) =
                                                                                                           in procEntryExit2(f,instrlist) end) bl
                                                                       in (procEntryExit3(f,flat il)) end) proclist
                                   val _ = List.map (fn proc => let val _ = print(#prolog proc)
-                                                                   fun temp2reg x = x (*TODO JOACO*)
+                                                                   val temp2reg = Splaymap.mkDict String.compare (*TODO JOACO*)
                                                                    val instrlist = (List.map (format temp2reg) (#body proc)) @ ["\n\n"]
                                                                    val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
                                                                    val _ = print(instructions)
