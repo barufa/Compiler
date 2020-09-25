@@ -5,6 +5,7 @@ open tigerseman
 open tigerframe
 open tigercodegen
 open tigerassem
+open tigercolor
 open BasicIO Nonstdio
 
 fun lexstream(is: instream) =
@@ -59,20 +60,25 @@ fun main(args) =
                                                                              #"\n" => "\\n"^acc
                                                                             |  _  => String.str(x)^acc) "" (String.explode s)
                                   val _ = allocLocal
+                                  val proc_frame = List.map (fn (bl,f) => let val il = List.map (fn b =>  let val instrlist = codegen f b
+                                                                                                          in procEntryExit2(f,instrlist) end) bl
+                                                                          in (flat il,f) end) proclist
+                                  val colored_proc = List.map (fn (body,f) => let val (color_inst,temp2reg,spill) = (body,Splaymap.mkDict String.compare,Splaymap.mkDict String.compare)(*val (color_inst,temp2reg,spill) = color (body,f)*)
+                                                                                  val proc_l = procEntryExit3(f,color_inst)
+                                                                              in (proc_l,temp2reg,spill) end ) proc_frame
+
                                   val _ = print("##START##\n")
                                   val _ = print("\n.data\n")
                                   val _ = List.map (fn (l,s) => print(l^":\t.quad "^Int.toString(String.size s)^"\n\t.string \""^(escape s)^"\"\n")) stringlist
+                                  (*agregar spill_table*)
+                                  val _ = List.map (fn (_,_,xs) => Splaymap.map (fn (_,v) => print(v^":\t.quad 0\n")) xs) colored_proc
                                   val _ = print("\n.text\n")
-					              val proc_l = List.map (fn (bl,f) => let val il = List.map (fn b =>  let val instrlist = codegen f b
-                                                                                                          in procEntryExit2(f,instrlist) end) bl
-                                                                      in (procEntryExit3(f,flat il)) end) proclist
-                                  val _ = List.map (fn proc => let val _ = print(#prolog proc)
-                                                                   val temp2reg = Splaymap.mkDict String.compare (*TODO JOACO*)
-                                                                   val instrlist = (List.map (format temp2reg) (#body proc)) @ ["\n\n"]
-                                                                   val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
-                                                                   val _ = print(instructions)
-                                                                   val _ = print(#epilog proc)
-                                                                in () end) proc_l
+                                  val _ = List.map (fn (proc,temp2reg,_) => let val _ = print(#prolog proc)
+                                                                                val instrlist = (List.map (format temp2reg) (#body proc)) @ ["\n\n"]
+                                                                                val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
+                                                                                val _ = print(instructions)
+                                                                                val _ = print(#epilog proc)
+                                                                          in () end) colored_proc
 							  in print("##FINISH##\n") end
 				else ()
 		val _ = if inter then tigerinterp.inter flow proclist stringlist
