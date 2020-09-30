@@ -1,0 +1,127 @@
+##START##
+
+.data
+L3:	.quad 1
+	.string "\n"
+
+.text
+.global fact
+	fact:
+#Prologo
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $0, %rsp
+#Cuerpo
+	L5:
+	#Guardando registros calleesaves\n
+	movq %rbx, %T5
+	movq %r10, %T6
+	movq %r11, %T7
+	movq %r12, %T8
+	movq %r13, %T9
+	movq %r14, %T10
+	movq %r15, %T11
+	#Cargando los argumentos\n
+	movq %rbp, %T27
+	movq $16, %T28
+	addq %T28, %T27
+	movq %rdi, (%T27)
+	movq %rsi, %T0
+	movq $0, %T29
+	cmpq %T0, %T29
+	je L0
+	L1:
+	movq %T0, %T26
+	movq %T0, %T30
+	movq $1, %T31
+	subq %T31, %T30
+	movq %T30, %T1
+	movq %rbp, %T33
+	movq $16, %T34
+	addq %T34, %T33
+	movq (%T33), %T32
+	movq %T32, %T2
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %T2, %rdi
+	movq %T1, %rsi
+	call fact
+	movq %rax, %T3
+	movq %T26, %T35
+	imulq %T3, %T35
+	movq %T35, %T4
+	L2:
+	movq %T4, %rax
+	#Restaurando registros calleesaves\n
+	movq %T5, %rbx
+	movq %T6, %r10
+	movq %T7, %r11
+	movq %T8, %r12
+	movq %T9, %r13
+	movq %T10, %r14
+	movq %T11, %r15
+	jmp L4
+	L0:
+	movq $1, %T36
+	movq %T36, %T4
+	jmp L2
+	L4:
+	
+
+
+#Epilogo
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+
+.global _tigermain
+	_tigermain:
+#Prologo
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $0, %rsp
+#Cuerpo
+	L7:
+	#Cargando los argumentos\n
+	movq %rbp, %T37
+	movq $16, %T38
+	addq %T38, %T37
+	movq %rdi, (%T37)
+	movq $3, %T39
+	movq %T39, %T12
+	movq %rbp, %T13
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %T13, %rdi
+	movq %T12, %rsi
+	call fact
+	movq %rax, %T14
+	movq %T14, %T40
+	movq $64, %T41
+	addq %T41, %T40
+	movq %T40, %T15
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %T15, %rdi
+	call chr
+	movq %rax, %T16
+	movq %T16, %T17
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %T17, %rdi
+	call print
+	leaq L3(%rip), %T42
+	movq %T42, %T18
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %T18, %rdi
+	call print
+	movq $0, %T43
+	movq %T43, %rax
+	jmp L6
+	L6:
+	
+
+
+#Epilogo
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+
+##FINISH##
+yes!!

@@ -1,0 +1,148 @@
+##START##
+
+.data
+L3:	.quad 1
+	.string "\n"
+spill1:	.quad 0
+spill2:	.quad 0
+spill3:	.quad 0
+spill4:	.quad 0
+spill5:	.quad 0
+spill6:	.quad 0
+spill7:	.quad 0
+
+.text
+.global fact
+	fact:
+#Prologo
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $0, %rsp
+#Cuerpo
+	L5:
+	#Guardando registros calleesaves\n
+	movq %rbx, %rbx
+	movq %rbx, spill3
+	movq %r10, %r10
+	movq %r10, spill4
+	movq %r11, %r11
+	movq %r11, spill5
+	movq %r12, %r12
+	movq %r12, spill6
+	movq %r13, %r13
+	movq %r13, spill7
+	movq %r14, %r14
+	movq %r14, spill1
+	movq %r15, %r15
+	movq %r15, spill2
+	#Cargando los argumentos\n
+	movq %rbp, %rdx
+	movq $16, %rcx
+	addq %rcx, %rdx
+	movq %rdi, (%rdx)
+	movq %rsi, %rsi
+	movq $0, %rax
+	cmpq %rsi, %rax
+	je L0
+	L1:
+	movq %rsi, %rbx
+	movq %rsi, %rsi
+	movq $1, %rax
+	subq %rax, %rsi
+	movq %rsi, %rsi
+	movq %rbp, %rdi
+	movq $16, %rcx
+	addq %rcx, %rdi
+	movq (%rdi), %rdi
+	movq %rdi, %rdi
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %rdi, %rdi
+	movq %rsi, %rsi
+	call fact
+	movq %rax, %rax
+	movq %rbx, %rbx
+	imulq %rax, %rbx
+	movq %rbx, %rbx
+	L2:
+	movq %rbx, %rax
+	#Restaurando registros calleesaves\n
+	movq spill3, %rbx
+	movq %rbx, %rbx
+	movq spill4, %r10
+	movq %r10, %r10
+	movq spill5, %r11
+	movq %r11, %r11
+	movq spill6, %r12
+	movq %r12, %r12
+	movq spill7, %r13
+	movq %r13, %r13
+	movq spill1, %r14
+	movq %r14, %r14
+	movq spill2, %r15
+	movq %r15, %r15
+	jmp L4
+	L0:
+	movq $1, %rbx
+	movq %rbx, %rbx
+	jmp L2
+	L4:
+	
+
+
+#Epilogo
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+
+.global _tigermain
+	_tigermain:
+#Prologo
+	pushq %rbp
+	movq %rsp, %rbp
+	subq $0, %rsp
+#Cuerpo
+	L7:
+	#Cargando los argumentos\n
+	movq %rbp, %rcx
+	movq $16, %rbx
+	addq %rbx, %rcx
+	movq %rdi, (%rcx)
+	movq $3, %rsi
+	movq %rsi, %rsi
+	movq %rbp, %rdi
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %rdi, %rdi
+	movq %rsi, %rsi
+	call fact
+	movq %rax, %rdi
+	movq %rdi, %rdi
+	movq $64, %rcx
+	addq %rcx, %rdi
+	movq %rdi, %rdi
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %rdi, %rdi
+	call chr
+	movq %rax, %rdi
+	movq %rdi, %rdi
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %rdi, %rdi
+	call print
+	leaq L3(%rip), %rdi
+	movq %rdi, %rdi
+	xorq %rax, %rax #cnt argumentos de punto flotante
+	movq %rdi, %rdi
+	call print
+	movq $0, %rax
+	movq %rax, %rax
+	jmp L6
+	L6:
+	
+
+
+#Epilogo
+	movq %rbp, %rsp
+	popq %rbp
+	ret
+
+##FINISH##
+yes!!
