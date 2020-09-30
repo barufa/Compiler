@@ -104,8 +104,8 @@ fun procEntryExit1 (f: frame,body) = (*body*)(*COMPLETADO*)
                                   else [COMMENT("Restaurando registros calleesaves")] @ List.map MOVE(ListPair.zip(List.map TEMP calleesaves,new_temps))
     in build_seq(save_calleesaves @ args_connect @ [body] @ restore_calleesaves) end
 
-fun procEntryExit2 (frame,instr) = (*COMPLETADO*)
-	instr @ [tigerassem.IOPER {assem = "",dst = callersaves,src = calleesaves,jump = NONE}]
+fun procEntryExit2 (frame,instr) = instr (*COMPLETADO*)
+(*	instr @ [tigerassem.IOPER {assem = "",dst = callersaves,src = calleesaves,jump = NONE}]*)
 
 fun procEntryExit3 (frame,instr) =(*COMPLETADO*)
   let
