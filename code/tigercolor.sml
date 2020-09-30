@@ -20,7 +20,7 @@ fun color (instr, frame) =
     val registers: tigerframe.register list = tigerframe.machineregs
 
     (* Estructuras de datos *)
-    val precolored: tigerframe.register Splayset.set ref= ref (Splayset.addList(Splayset.empty String.compare,registers))
+    val precolored: tigerframe.register Splayset.set ref= ref (Splayset.addList(Splayset.empty String.compare,registers@["rbp","rsp"]))
     val initial: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
     val simplifyWorklist: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
     val freezeWorklist: tigertemp.temp Splayset.set ref = ref (Splayset.empty String.compare)
@@ -45,7 +45,8 @@ fun color (instr, frame) =
     val alias: (tigertemp.temp,tigertemp.temp) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
     val color: allocation ref = ref (Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) (!precolored))
 
-    val K: int = Splayset.numItems (!precolored)
+(*    val K: int = Splayset.numItems (!precolored)*)
+    val K: int = List.length registers
 
     (* Mapeamos temporales que se movieron a memoria a su direccion de memoria correspondiente.
        Luego en el .data se reservara espacio en memoria para estos valores. *)
