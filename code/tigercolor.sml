@@ -270,18 +270,25 @@ fun color (instr, frame) =
         val (u,v) = if Splayset.member(!precolored,y) then (y,x) else (x,y)
       in
         worklistMoves := Splayset.delete(!worklistMoves,m);
-        if (String.compare(u,v) = EQUAL)
-        then (coalescedMoves := Splayset.add(!coalescedMoves,m);
-              AddWorkList u)
-        else (if (Splayset.member(!precolored,v) orelse Splayset.member(!adjSet,(u,v)))
-              then (constrainedMoves := Splayset.add(!constrainedMoves,m);
-                    AddWorkList u;
-                    AddWorkList v)
-              else (if ((Splayset.member(!precolored,u) andalso (Splayset.foldr (fn (t,b) => OK(t,u) andalso b ) true (Adjacent v))) orelse (not((Splayset.member(!precolored,u)) andalso Conservative(Splayset.union(Adjacent u,Adjacent v)))))
-                    then (coalescedMoves := Splayset.add(!coalescedMoves,m);
-                          Combine(u,v);
-                          AddWorkList u)
-                    else (activeMoves := Splayset.add(!activeMoves,m))))
+        (* La idea de este primer if es no combinar ningun move donde aparezca rbp o rsp, ya que no
+           queremos modificar los valores de dichos registros. Cuando se quiera utilizar dichos valores
+           los moveremos a un nuevo registro primero. *)
+        if (String.compare(u,"rbp") = EQUAL orelse String.compare(u,"rsp") = EQUAL)
+        then (constrainedMoves := Splayset.add(!constrainedMoves,m);
+              AddWorkList u;
+              AddWorkList v)
+        else (if (String.compare(u,v) = EQUAL)
+              then (coalescedMoves := Splayset.add(!coalescedMoves,m);
+                    AddWorkList u)
+              else (if (Splayset.member(!precolored,v) orelse Splayset.member(!adjSet,(u,v)))
+                    then (constrainedMoves := Splayset.add(!constrainedMoves,m);
+                          AddWorkList u;
+                          AddWorkList v)
+                    else (if ((Splayset.member(!precolored,u) andalso (Splayset.foldr (fn (t,b) => OK(t,u) andalso b ) true (Adjacent v))) orelse (not((Splayset.member(!precolored,u)) andalso Conservative(Splayset.union(Adjacent u,Adjacent v)))))
+                          then (coalescedMoves := Splayset.add(!coalescedMoves,m);
+                                Combine(u,v);
+                                AddWorkList u)
+                          else (activeMoves := Splayset.add(!activeMoves,m)))))
       end
 
     fun FreezeMoves u =
