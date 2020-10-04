@@ -93,12 +93,15 @@ fun procEntryExit1 (f: frame,body) = (*body*)(*COMPLETADO*)
     let val frame_name = (name f)
         fun move_args [] _     = []
           | move_args (x::xs) n = let val argsregs_size = List.length argsregs
-                                     val dst = if n < argsregs_size then TEMP (List.nth(argsregs,n))
+                                      val dst = if n < argsregs_size then TEMP (List.nth(argsregs,n))
                                                else MEM(BINOP(PLUS, CONST ((n-argsregs_size)*8+16), TEMP fp))
                                  in MOVE(exp x fp, dst) :: (move_args xs (n+1))  end
         val args_connect = [COMMENT("Cargando los argumentos")] @ (move_args (!(#accesslist f)) 0)
+        val _ = List.map (fn x => case x of
+                                    InReg l => print("InReg "^l^"\n")
+                                  | InFrame k => print("InFrame "^Int.toString(k)^"\n")) (!(#accesslist f))
         val new_temps = List.tabulate(List.length calleesaves , fn _ => TEMP (tigertemp.newtemp()))
-        val save_calleesaves = if frame_name = "_tigermain" then [] (*Es necesario guardar los callesaves? No se hace durante el coloreo?*)
+        val save_calleesaves = if frame_name = "_tigermain" then []
                                else [COMMENT("Guardando registros calleesaves")] @ List.map MOVE(ListPair.zip(new_temps,List.map TEMP calleesaves))
         val restore_calleesaves = if frame_name = "_tigermain" then []
                                   else [COMMENT("Restaurando registros calleesaves")] @ List.map MOVE(ListPair.zip(List.map TEMP calleesaves,new_temps))

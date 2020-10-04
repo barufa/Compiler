@@ -21,20 +21,13 @@ spill7:	.quad 0
 #Cuerpo
 	L5:
 	#Guardando registros calleesaves\n
-	movq %rbx, %rbx
-	movq %rbx, spill3
-	movq %r10, %r10
-	movq %r10, spill4
-	movq %r11, %r11
-	movq %r11, spill5
-	movq %r12, %r12
-	movq %r12, spill6
-	movq %r13, %r13
-	movq %r13, spill7
-	movq %r14, %r14
-	movq %r14, spill1
-	movq %r15, %r15
-	movq %r15, spill2
+	pushq %rbx
+	pushq %r10
+	pushq %r11
+	pushq %r12
+	pushq %r13
+	pushq %r14
+	pushq %r15
 	#Cargando los argumentos\n
 	movq %rbp, %rdx
 	movq $16, %rcx
@@ -42,7 +35,7 @@ spill7:	.quad 0
 	movq %rdi, (%rdx)
 	movq %rsi, %rsi
 	movq $0, %rax
-	cmpq %rsi, %rax
+	cmpq %rax, %rsi
 	je L0
 	L1:
 	movq %rsi, %rbx
@@ -66,20 +59,13 @@ spill7:	.quad 0
 	L2:
 	movq %rbx, %rax
 	#Restaurando registros calleesaves\n
-	movq spill3, %rbx
-	movq %rbx, %rbx
-	movq spill4, %r10
-	movq %r10, %r10
-	movq spill5, %r11
-	movq %r11, %r11
-	movq spill6, %r12
-	movq %r12, %r12
-	movq spill7, %r13
-	movq %r13, %r13
-	movq spill1, %r14
-	movq %r14, %r14
-	movq spill2, %r15
-	movq %r15, %r15
+	popq %r15
+	popq %r14
+	popq %r13
+	popq %r12
+	popq %r11	
+	popq %r10	
+	popq %rbx	
 	jmp L4
 	L0:
 	movq $1, %rbx
@@ -107,7 +93,7 @@ spill7:	.quad 0
 	movq $16, %rbx
 	addq %rbx, %rcx
 	movq %rdi, (%rcx)
-	movq $3, %rsi
+	movq $4, %rsi
 	movq %rsi, %rsi
 	movq %rbp, %rdi
 	xorq %rax, %rax #cnt argumentos de punto flotante
@@ -145,4 +131,4 @@ spill7:	.quad 0
 	ret
 
 ##FINISH##
-yes!!
+

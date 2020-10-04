@@ -23,7 +23,7 @@ let val ilist = ref ([]:instr list)
       | munchStm (EXP e) = (munchExp e; ())
       | munchStm (JUMP (NAME n, ln)) = emitO("jmp "^n,[],[],SOME ln)
       | munchStm (CJUMP (oper, e1, e2, l1, l2)) =
-					let val _ = emitO("cmpq %'s0, %'s1",[munchExp e1, munchExp e2],[],NONE)
+					let val _ = emitO("cmpq %'s1, %'s0",[munchExp e1, munchExp e2],[],NONE)
 					in case oper of
 						  EQ => emitO("je 'j0",[],[],SOME [l1,l2])
 						| NE => emitO("jne 'j0",[],[],SOME [l1,l2])

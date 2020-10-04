@@ -6,5 +6,5 @@ let
       then 1
       else n * fact (n - 1)
 in
-  (print(chr(fact (3)+64));print("\n");0)
+  (print(chr(fact(3)+65));print("\n");0)
 end
