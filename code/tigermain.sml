@@ -29,7 +29,7 @@ fun main(args) =
 			[n] => ((open_in n)
 					handle _ => raise Fail (n^" no existe!"))
 			| [] => std_in
-			| _ => raise Fail "opcio'n dsconocida!"
+			| _ => raise Fail "opcion dsconocida!"
 		val lexbuf = lexstream entrada
 		val expr = prog Tok lexbuf handle _ => errParsing lexbuf
 		val _ = findEscape(expr)
@@ -63,7 +63,7 @@ fun main(args) =
                                   val proc_frame = List.map (fn (bl,f) => let val il = List.map (fn b =>  let val instrlist = codegen f b
                                                                                                           in procEntryExit2(f,instrlist) end) bl
                                                                           in (flat il,f) end) proclist
-                                  val colored_proc = List.map (fn (body,f) => let val (color_inst,temp2reg,spill) = (body,Splaymap.mkDict String.compare,Splaymap.mkDict String.compare)(*(color_inst,temp2reg,spill) = (body,Splaymap.mkDict String.compare,Splaymap.mkDict String.compare)*)(*(color_inst,temp2reg,spill) = color (body,f)*)
+                                  val colored_proc = List.map (fn (body,f) => let val (color_inst,temp2reg,spill) = color (body,f)(*(color_inst,temp2reg,spill) = (body,Splaymap.mkDict String.compare,Splaymap.mkDict String.compare)*)(*(color_inst,temp2reg,spill) = color (body,f)*)
                                                                                   val proc_l = procEntryExit3(f,color_inst)
                                                                               in (proc_l,temp2reg,spill) end ) proc_frame
 

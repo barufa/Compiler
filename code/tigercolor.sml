@@ -1,4 +1,4 @@
-structure tigercolor :> tigercolor = 
+structure tigercolor :> tigercolor =
 struct
 
 open tigerassem
@@ -68,7 +68,7 @@ fun color (instr, frame) =
           | NONE => spill()
       end
 
-    fun mapSpillNode t = Splaymap.find(!spillTable,t)
+    fun mapSpillNode t = Splaymap.find(!spillTable,t)^"(%rip)"
 
     fun GetDegree n = case Splaymap.peek(!degree,n) of
                        SOME v => v
@@ -87,9 +87,9 @@ fun color (instr, frame) =
     fun PopSelectStack () =
       let
         val n = tigerpila.topPila selectStack
-      in tigerpila.popPila selectStack;selectStackSet := Splayset.delete(!selectStackSet,n);n end 
+      in tigerpila.popPila selectStack;selectStackSet := Splayset.delete(!selectStackSet,n);n end
 
-    fun EmptySelectStack () = 
+    fun EmptySelectStack () =
       while(tigerpila.lenPila selectStack > 0)
       do(tigerpila.popPila selectStack)
 
@@ -129,7 +129,7 @@ fun color (instr, frame) =
         false => minSpillCost (Splayset.listItems (!spillWorklist))
         | true => raise Fail ("spillWorklist esta vacio")
 
-    fun getItemToSimplify () = 
+    fun getItemToSimplify () =
       case Splayset.isEmpty(!simplifyWorklist) of
         false => minSpillCost (Splayset.listItems (!simplifyWorklist))
         | true => raise Fail ("simplifyWorklist esta vacio")
@@ -177,7 +177,7 @@ fun color (instr, frame) =
             else ();
             Splayset.app (fn d => Splayset.app (fn l => AddEdge(l,d)) (liveO_I)) def_I
           end
-          fun listToN a b = 
+          fun listToN a b =
             case Int.compare(a,b) of
               EQUAL => [b]
               | LESS => a::listToN (a+1) b
@@ -202,7 +202,7 @@ fun color (instr, frame) =
 
     fun EnableMoves nodes = Splayset.app (fn n => Splayset.app (fn m => if (Splayset.member(!activeMoves,m)) then (activeMoves := Splayset.delete(!activeMoves,m);worklistMoves := Splayset.add(!worklistMoves,m)) else ()) (NodeMoves n)) nodes
 
-    fun DecrementDegree m = 
+    fun DecrementDegree m =
       let
         val d = GetDegree m
       in
@@ -220,7 +220,7 @@ fun color (instr, frame) =
       let
         val n = getItemToSimplify()
         val _ = print("Simplify de "^n^"\n")
-      in 
+      in
         simplifyWorklist := Splayset.delete(!simplifyWorklist,n);
         PushSelectStack n;
         Splayset.app (fn m => DecrementDegree m) (Adjacent n)
@@ -233,7 +233,7 @@ fun color (instr, frame) =
 
     fun OK (t,r) = GetDegree t < K orelse Splayset.member(!precolored,t) orelse Splayset.member(!adjSet,(t,r))
 
-    fun Conservative nodes = 
+    fun Conservative nodes =
       let
         val j = ref 0
       in
@@ -260,7 +260,7 @@ fun color (instr, frame) =
                 else ()
       in () end
 
-    fun Coalesce () = 
+    fun Coalesce () =
       let
         val m = getItem (!worklistMoves)
         val (x,y) = m
@@ -292,7 +292,7 @@ fun color (instr, frame) =
       end
 
     fun FreezeMoves u =
-      let 
+      let
         fun f m = let
                     val (x,y) = m
                     val v = if (String.compare(GetAlias y,GetAlias u) = EQUAL) then (GetAlias x) else (GetAlias y)
@@ -339,7 +339,7 @@ fun color (instr, frame) =
                           spilledNodes := Splayset.add(!spilledNodes,n))
                     else (print("Asignandole un color a \""^n^"\"\n");
                           coloredNodes := Splayset.add(!coloredNodes,n);
-                          color := Splaymap.insert(!color,n,getItem (!okColors))) 
+                          color := Splaymap.insert(!color,n,getItem (!okColors)))
           in () end
         fun colorCoalesced n = if not(Splayset.member(!spilledNodes,GetAlias n))
                                then (color := Splaymap.insert(!color,n,GetColor(GetAlias(n))))
@@ -354,7 +354,7 @@ fun color (instr, frame) =
       let
         val _ = print("Reescribiendo programa\n")
         (* Cambia todas las apariciones del temporario temp por nuevos temporarios *)
-        fun addNewTemps (IOPER{assem,dst,src,jump}::inst) temp (ilist,dlist,ulist) = 
+        fun addNewTemps (IOPER{assem,dst,src,jump}::inst) temp (ilist,dlist,ulist) =
           let
             val (dlist,dst,ulist,src) =
               case (List.exists (fn n => String.compare(n,temp) = EQUAL) dst,List.exists (fn n => String.compare(n,temp) = EQUAL) src) of
@@ -364,7 +364,7 @@ fun color (instr, frame) =
                 | (false,false) => (dlist,dst,ulist,src)
             val ilist = IOPER{assem=assem,dst=dst,src=src,jump=jump}::ilist
           in addNewTemps inst temp (ilist,dlist,ulist) end
-        | addNewTemps (IMOVE{assem,dst,src}::inst) temp (ilist,dlist,ulist) = 
+        | addNewTemps (IMOVE{assem,dst,src}::inst) temp (ilist,dlist,ulist) =
           let
             val (dlist,dst,ulist,src) =
               case (String.compare(dst,temp),String.compare(src,temp)) of
@@ -378,7 +378,7 @@ fun color (instr, frame) =
         | addNewTemps [] temp (ilist,dlist,ulist) = (List.rev ilist,dlist,ulist)
         (* Agrega las instrucciones de almacenar en la memoria reservada para temp los nuevos
            temporarios que se agregaron con la funcion addNewTemps *)
-        fun addStore (IOPER{assem,dst,src,jump}::inst) temp ilist dlist = 
+        fun addStore (IOPER{assem,dst,src,jump}::inst) temp ilist dlist =
           let
             val a = Splayset.intersection(Splayset.addList(Splayset.empty String.compare,dst),Splayset.addList(Splayset.empty String.compare,dlist))
             val _ = if Splayset.numItems(a) > 1 then print("tigercolor: Chequear. Tiene mas de 2 elementos.\n") else ()
@@ -387,7 +387,7 @@ fun color (instr, frame) =
             val dlist = if Splayset.numItems(a) > 0 then List.filter (fn n => not(String.compare(n,t') = EQUAL)) dlist else dlist
             val ilist = l @ ilist
           in addStore inst temp ilist dlist end
-        | addStore (IMOVE{assem,dst,src}::inst) temp ilist dlist = 
+        | addStore (IMOVE{assem,dst,src}::inst) temp ilist dlist =
           let
             val l = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then [IOPER{assem="movq %'s0, "^mapSpillNode temp^"",src=[dst],dst=[],jump=NONE},IMOVE{assem=assem,dst=dst,src=src}] else [IMOVE{assem=assem,dst=dst,src=src}]
             val dlist = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then List.filter (fn n => not(String.compare(n,dst) = EQUAL)) dlist else dlist
@@ -397,7 +397,7 @@ fun color (instr, frame) =
         | addStore [] temp ilist dlist = List.rev ilist
         (* Agrega las instrucciones de cargar el valor de temp desde la memoria a los nuevos
            temporarios que se agregaron con la funcion addNewTemps *)
-        fun addLoad (IOPER{assem,dst,src,jump}::inst) temp ilist ulist = 
+        fun addLoad (IOPER{assem,dst,src,jump}::inst) temp ilist ulist =
           let
             val a = Splayset.intersection(Splayset.addList(Splayset.empty String.compare,src),Splayset.addList(Splayset.empty String.compare,ulist))
             val _ = if Splayset.numItems(a) > 1 then print("tigercolor: Chequear. Tiene mas de 2 elementos.\n") else ()
@@ -406,7 +406,7 @@ fun color (instr, frame) =
             val ulist = if Splayset.numItems(a) > 0 then List.filter (fn n => not(String.compare(n,t') = EQUAL)) ulist else ulist
             val ilist = l @ ilist
           in addLoad inst temp ilist ulist end
-        | addLoad (IMOVE{assem,dst,src}::inst) temp ilist ulist = 
+        | addLoad (IMOVE{assem,dst,src}::inst) temp ilist ulist =
           let
             val l = if List.exists (fn n => String.compare(n,src) = EQUAL) ulist then [IMOVE{assem=assem,dst=dst,src=src},IOPER{assem="movq "^mapSpillNode temp^", %'d0",src=[],dst=[src],jump=NONE}] else [IMOVE{assem=assem,dst=dst,src=src}]
             val ulist = if List.exists (fn n => String.compare(n,src) = EQUAL) ulist then List.filter (fn n => not(String.compare(n,src) = EQUAL)) ulist else ulist
@@ -414,7 +414,7 @@ fun color (instr, frame) =
           in addLoad inst temp ilist ulist end
         | addLoad (i::inst) temp ilist ulist = addLoad inst temp (i::ilist) ulist
         | addLoad [] temp ilist ulist = List.rev ilist
-        (* Agrega las nuevas instrucciones de carga y guardado cuando se derrama un nodo 
+        (* Agrega las nuevas instrucciones de carga y guardado cuando se derrama un nodo
            Tener en cuenta que primero se debe aplicar addStore antes que addLoad, sino generara un codigo erroneo *)
         fun proccess (temp,inst) =
           let
@@ -480,7 +480,7 @@ fun color (instr, frame) =
         val _ = color := Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,n)) (Splaymap.mkDict String.compare) (!precolored)
       in () end
 
-    fun Main instrs = 
+    fun Main instrs =
       let
         val _ = Init()
         val _ = LivenessAnalysis instrs
