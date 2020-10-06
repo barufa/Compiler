@@ -43,7 +43,7 @@ val log2WSz = 3				 (* base two logarithm of word size in bytes *)
 *)
 
 val localsInicial = 0	 (* words *)
-val localsGap = ~4 		 (* bytes *)
+val localsGap = ~8 		 (* bytes *)
 
 (* COMPLETAR registros *)
 val rv = "rax"      (* return value  *)
@@ -63,7 +63,7 @@ fun allocLocal (f: frame) b =
 	case b of
 	  true =>
 		let val _ = #actualLocal f:=(!(#actualLocal f)+1)
-		in InFrame(!(#actualLocal f)*wSz+localsGap) end
+		in InFrame(!(#actualLocal f)*localsGap) end
 	| false => InReg(tigertemp.newtemp())
 val allocArg = allocLocal
 
