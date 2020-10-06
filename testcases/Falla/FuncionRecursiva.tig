@@ -1,5 +1,0 @@
-let
-    var a:=0
-    var b:=5
-    function fact(i:int):int = if i=0 then 1 else i * fact(i-1)
-in fact(b) end

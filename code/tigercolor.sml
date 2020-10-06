@@ -48,28 +48,8 @@ fun color (instr, frame) =
 (*    val K: int = Splayset.numItems (!precolored)*)
     val K: int = List.length registers
 
-    (* Mapeamos temporales que se movieron a memoria a su direccion de memoria correspondiente.
-       Luego en el .data se reservara espacio en memoria para estos valores. *)
-    val spillTable: (tigertemp.temp,String.string) Splaymap.dict ref = ref (Splaymap.mkDict String.compare)
-
     (* Funciones *)
       (* Funciones auxiliares*)
-    fun spillNewNode t =
-      let
-        fun spill () =
-          let
-            val n = Splaymap.numItems (!spillTable)
-            val s = "spill"^Int.toString (n+1)
-            val _ = spillTable := Splaymap.insert(!spillTable,t,s)
-          in () end
-      in
-        case Splaymap.peek(!spillTable,t) of
-          SOME v => ()
-          | NONE => spill()
-      end
-
-    fun mapSpillNode t = Splaymap.find(!spillTable,t)^"(%rip)"
-
     fun GetDegree n = case Splaymap.peek(!degree,n) of
                        SOME v => v
                        | NONE => 0
@@ -353,6 +333,15 @@ fun color (instr, frame) =
     fun RewriteProgram instrs =
       let
         val _ = print("Reescribiendo programa\n")
+        (* Guardamos los spilledNodes en la pila *)
+        val offsetTable = Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,tigerframe.allocLocal frame true)) (Splaymap.mkDict String.compare) (!spilledNodes)
+        (* Funcion para obtener el offset del temporario temp en la pila.
+           Lo devuelve como una string. *)
+        fun findOffset temp = case Splaymap.find(offsetTable,temp) of
+                                tigerframe.InFrame k => (case k < 0 of
+                                                          true => "-"^Int.toString(Int.abs(k))
+                                                          | false => Int.toString k)
+                                | tigerframe.InReg _ => raise Fail ("tigercolor: No deberia pasar findOffset\n")
         (* Cambia todas las apariciones del temporario temp por nuevos temporarios *)
         fun addNewTemps (IOPER{assem,dst,src,jump}::inst) temp (ilist,dlist,ulist) =
           let
@@ -376,39 +365,39 @@ fun color (instr, frame) =
           in addNewTemps inst temp (ilist,dlist,ulist) end
         | addNewTemps (i::inst) temp (ilist,dlist,ulist) = addNewTemps inst temp (i::ilist,dlist,ulist)
         | addNewTemps [] temp (ilist,dlist,ulist) = (List.rev ilist,dlist,ulist)
-        (* Agrega las instrucciones de almacenar en la memoria reservada para temp los nuevos
+        (* Agrega las instrucciones de almacenar en el lugar de la pila reservada para temp los nuevos
            temporarios que se agregaron con la funcion addNewTemps *)
         fun addStore (IOPER{assem,dst,src,jump}::inst) temp ilist dlist =
           let
             val a = Splayset.intersection(Splayset.addList(Splayset.empty String.compare,dst),Splayset.addList(Splayset.empty String.compare,dlist))
             val _ = if Splayset.numItems(a) > 1 then print("tigercolor: Chequear. Tiene mas de 2 elementos.\n") else ()
             val t' = if Splayset.numItems(a) > 0 then getItem a else ""
-            val l = if Splayset.numItems(a) > 0 then [IOPER{assem="movq %'s0, "^mapSpillNode temp^"",src=[t'],dst=[],jump=NONE},IOPER{assem=assem,dst=dst,src=src,jump=jump}] else [IOPER{assem=assem,dst=dst,src=src,jump=jump}]
+            val l = if Splayset.numItems(a) > 0 then [IOPER{assem="movq %'s0, "^findOffset temp^"(%'s1)",src=[t',tigerframe.fp],dst=[],jump=NONE},IOPER{assem=assem,dst=dst,src=src,jump=jump}] else [IOPER{assem=assem,dst=dst,src=src,jump=jump}]
             val dlist = if Splayset.numItems(a) > 0 then List.filter (fn n => not(String.compare(n,t') = EQUAL)) dlist else dlist
             val ilist = l @ ilist
           in addStore inst temp ilist dlist end
         | addStore (IMOVE{assem,dst,src}::inst) temp ilist dlist =
           let
-            val l = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then [IOPER{assem="movq %'s0, "^mapSpillNode temp^"",src=[dst],dst=[],jump=NONE},IMOVE{assem=assem,dst=dst,src=src}] else [IMOVE{assem=assem,dst=dst,src=src}]
+            val l = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then [IOPER{assem="movq %'s0, "^findOffset temp^"(%'s1)",src=[dst,tigerframe.fp],dst=[],jump=NONE},IMOVE{assem=assem,dst=dst,src=src}] else [IMOVE{assem=assem,dst=dst,src=src}]
             val dlist = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then List.filter (fn n => not(String.compare(n,dst) = EQUAL)) dlist else dlist
             val ilist = l @ ilist
           in addStore inst temp ilist dlist end
         | addStore (i::inst) temp ilist dlist = addStore inst temp (i::ilist) dlist
         | addStore [] temp ilist dlist = List.rev ilist
-        (* Agrega las instrucciones de cargar el valor de temp desde la memoria a los nuevos
+        (* Agrega las instrucciones de cargar el valor de temp desde la pila a los nuevos
            temporarios que se agregaron con la funcion addNewTemps *)
         fun addLoad (IOPER{assem,dst,src,jump}::inst) temp ilist ulist =
           let
             val a = Splayset.intersection(Splayset.addList(Splayset.empty String.compare,src),Splayset.addList(Splayset.empty String.compare,ulist))
             val _ = if Splayset.numItems(a) > 1 then print("tigercolor: Chequear. Tiene mas de 2 elementos.\n") else ()
             val t' = if Splayset.numItems(a) > 0 then getItem a else ""
-            val l = if Splayset.numItems(a) > 0 then [IOPER{assem=assem,dst=dst,src=src,jump=jump},IOPER{assem="movq "^mapSpillNode temp^", %'d0",src=[],dst=[t'],jump=NONE}] else [IOPER{assem=assem,dst=dst,src=src,jump=jump}]
+            val l = if Splayset.numItems(a) > 0 then [IOPER{assem=assem,dst=dst,src=src,jump=jump},IOPER{assem="movq "^findOffset temp^"(%'s0), %'d0",src=[tigerframe.fp],dst=[t'],jump=NONE}] else [IOPER{assem=assem,dst=dst,src=src,jump=jump}]
             val ulist = if Splayset.numItems(a) > 0 then List.filter (fn n => not(String.compare(n,t') = EQUAL)) ulist else ulist
             val ilist = l @ ilist
           in addLoad inst temp ilist ulist end
         | addLoad (IMOVE{assem,dst,src}::inst) temp ilist ulist =
           let
-            val l = if List.exists (fn n => String.compare(n,src) = EQUAL) ulist then [IMOVE{assem=assem,dst=dst,src=src},IOPER{assem="movq "^mapSpillNode temp^", %'d0",src=[],dst=[src],jump=NONE}] else [IMOVE{assem=assem,dst=dst,src=src}]
+            val l = if List.exists (fn n => String.compare(n,src) = EQUAL) ulist then [IMOVE{assem=assem,dst=dst,src=src},IOPER{assem="movq "^findOffset temp^"(%'s0), %'d0",src=[tigerframe.fp],dst=[src],jump=NONE}] else [IMOVE{assem=assem,dst=dst,src=src}]
             val ulist = if List.exists (fn n => String.compare(n,src) = EQUAL) ulist then List.filter (fn n => not(String.compare(n,src) = EQUAL)) ulist else ulist
             val ilist = l @ ilist
           in addLoad inst temp ilist ulist end
@@ -424,8 +413,6 @@ fun color (instr, frame) =
             val ilist = addStore ilist temp [] dlist
             val ilist = addLoad ilist temp [] ulist
           in ilist end
-        (* Agregamos los temporarios que se van a mover a memoria a la tabla de temporarios derramados *)
-        val _ = List.app (fn t => spillNewNode t) (Splayset.listItems (!spilledNodes))
         (* Modificamos las instrucciones *)
         val instrs = List.foldl proccess instrs (Splayset.listItems (!spilledNodes))
       in
@@ -504,19 +491,15 @@ fun color (instr, frame) =
     val _ = print("Fin del coloreo\n")
     val _ = print("#####################################\n")
   in
-    (instrucciones,!color,!spillTable)
+    (instrucciones,!color)
   end
 
-  fun debug (instrs,alloc,table) =
+  fun debug (instrs,alloc) =
     let
           val _ = print("#################################\n")
           val _ = print("Mostrando las instrucciones:\n")
           fun printInstr i = tigerassem.formatCode i
           val _ = List.app printInstr instrs
-          val _ = print("#################################\n")
-          val _ = print("Mostrando la informacion de la spillTable:\n")
-          fun printItem (a,b) = print(a^" --> "^b^"\n")
-          val _ = List.app printItem (Splaymap.listItems table)
           val _ = print("#################################\n")
           val _ = print("Mostrando el resultado de la allocacion\n")
           fun printAlloc (t,r) = print(t^" --> "^r^"\n")

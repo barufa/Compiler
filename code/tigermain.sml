@@ -63,17 +63,15 @@ fun main(args) =
                                   val proc_frame = List.map (fn (bl,f) => let val il = List.map (fn b =>  let val instrlist = codegen f b
                                                                                                           in procEntryExit2(f,instrlist) end) bl
                                                                           in (flat il,f) end) proclist
-                                  val colored_proc = List.map (fn (body,f) => let val (color_inst,temp2reg,spill) = color (body,f)(*(color_inst,temp2reg,spill) = (body,Splaymap.mkDict String.compare,Splaymap.mkDict String.compare)*)(*(color_inst,temp2reg,spill) = color (body,f)*)
+                                  val colored_proc = List.map (fn (body,f) => let val (color_inst,temp2reg) = color (body,f)(*(color_inst,temp2reg) = (body,Splaymap.mkDict String.compare)*)(*(color_inst,temp2reg) = color (body,f)*)
                                                                                   val proc_l = procEntryExit3(f,color_inst)
-                                                                              in (proc_l,temp2reg,spill) end ) proc_frame
+                                                                              in (proc_l,temp2reg) end ) proc_frame
 
                                   val _ = print("##START##\n")
                                   val _ = print("\n.data\n")
                                   val _ = List.map (fn (l,s) => print(l^":\t.quad "^Int.toString(String.size s)^"\n\t.string \""^(escape s)^"\"\n")) stringlist
-                                  (*agregar spill_table*)
-                                  val _ = List.map (fn (_,_,xs) => Splaymap.map (fn (_,v) => print(v^":\t.quad 0\n")) xs) colored_proc
                                   val _ = print("\n.text\n")
-                                  val _ = List.map (fn (proc,temp2reg,_) => let val _ = print(#prolog proc)
+                                  val _ = List.map (fn (proc,temp2reg) => let val _ = print(#prolog proc)
                                                                                 val instrlist = (List.map (format temp2reg) (#body proc)) @ ["\n\n"]
                                                                                 val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
                                                                                 val _ = print(instructions)
