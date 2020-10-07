@@ -343,12 +343,13 @@ fun transExp(venv, tenv) =
 				val listfuns = List.map (fn (fname,params,body,tresult,ps,pos) => (*Preparo las funciones para agregarlas al entorno (Creando su nuevo level)*)
 																	let 
 																			val boolformals = List.map (fn (_,_,ref b) => b) ps																
+                                      val funcname = if String.compare("_tigermain",fname)=EQUAL then fname else tigertemp.newfun()^"_"^fname
 																			val fnc = {
-																									label = fname,
+																									label = funcname,
 																									formals = List.map (#2) ps,
 																									result = tresult,
 																									extern = false,
-																									level = newLevel({parent=topLevel(),name=fname,formals=boolformals})
+																									level = newLevel({parent=topLevel(),name=funcname,formals=boolformals})
 																								}
 																	in (fname,Func fnc) end) typfuns
 				(*Agrego las funciones al entorno*)

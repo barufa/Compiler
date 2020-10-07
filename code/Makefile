@@ -90,7 +90,7 @@ tigertopsort.ui: tigertab.ui tigertips.uo tigerabs.uo
 tigersimpleregalloc.ui: tigerframe.ui tigerassem.uo 
 tigerpp.uo: tigerabs.uo 
 tigerseman.uo: tigerseman.ui tigersres.uo tigertab.ui tigerpila.ui \
-    tigertopsort.ui tigerabs.uo tigertrans.ui 
+    tigertopsort.ui tigertemp.ui tigerabs.uo tigertrans.ui 
 tigergrm.uo: tigergrm.ui tigernlin.uo tigerabs.uo 
 tigerframe.ui: tigertree.uo tigerassem.uo tigertemp.ui 
 tigertrans.uo: tigertrans.ui tigertree.uo tigerpila.ui tigerframe.ui \
