@@ -294,7 +294,7 @@ fun transExp(venv, tenv) =
 									| TUnit => error("No se puede declarar la variable ("^name^") y asignarle algo del tipo Unit",pos)
 									| _ 		=> ()
 				val varAccess = allocLocal (topLevel()) (!escape)
-				val venv' = tabInserta(name,Var {ty=tyinit,access= varAccess,level=getActualLev()},venv)
+				val venv' = tabRInserta(name,Var {ty=tyinit,access= varAccess,level=getActualLev()},venv)
 			in (venv', tenv, [assignExp{var = varDec varAccess,exp=expinit}]) end
 		| trdec (venv,tenv) (VarDec ({name,escape,typ=SOME s,init},pos)) = (*COMPLETADO*)
 			let
@@ -308,7 +308,7 @@ fun transExp(venv, tenv) =
 																				") no coincide con el tipo del valor inicial asignado",pos)
 									| NONE 	=> error("El tipo ("^s^") de la variable ("^name^") no esta definido",pos)
 				val varAccess = allocLocal (topLevel()) (!escape)
-				val venv' = tabInserta(name,Var {ty=t,access= varAccess,level=getActualLev()},venv)(*TabRInserta?*)
+				val venv' = tabRInserta(name,Var {ty=t,access= varAccess,level=getActualLev()},venv)
 			in (venv', tenv, [assignExp{var = varDec varAccess,exp=expinit}]) end
 		| trdec (venv,tenv) (FunctionDec fs) =(*COMPLETADO*)
 			let
