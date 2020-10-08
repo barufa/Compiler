@@ -1,3 +1,0 @@
-let var x:=2
-    var x:int:=x+3
-in x end

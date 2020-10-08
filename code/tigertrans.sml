@@ -8,7 +8,7 @@ open tigerabs
 exception breakexc
 exception divCero
 exception OrphanBreak
-	
+
 type level = {parent:frame option , frame: frame, level: int}
 type access = tigerframe.access
 
@@ -104,7 +104,7 @@ in
 	fun topSalida() =
 		case tigerpila.topPila salidas of
 			SOME l => l
-			| NONE => raise OrphanBreak			
+			| NONE => raise OrphanBreak
 end
 
 val datosGlobs = ref ([]: frag list)
@@ -149,7 +149,7 @@ fun intExp i = Ex (CONST i)
 fun simpleVar(InFrame offset, nivel) = (*COMPLETADO*)
   let fun staticLink 0 = TEMP fp
 			| staticLink n = (case n > 0 of
-													true => MEM(BINOP(PLUS,staticLink (n-1),CONST fpPrevLev))
+													true => MEM(BINOP(MINUS,staticLink (n-1),CONST fpPrevLev))
 													| false => raise Fail "Error interno 0 - tigertrans.sml")
 			val instr = MEM(BINOP(PLUS,staticLink (getActualLev()-nivel),CONST offset))
 	in Ex(instr) end
@@ -201,7 +201,7 @@ fun callExp (name,false,isproc,lev:level,args) = (*COMPLETADO*)
 													case Int.compare(getActualLev(),getlevel lev) of
 														LESS => TEMP fp
 														| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (2*wSz)))
-														| GREATER => 
+														| GREATER =>
 															let val tmp = TEMP (newtemp())
 																	fun recorre 0 = []
 																	|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)

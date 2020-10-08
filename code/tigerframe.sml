@@ -82,7 +82,7 @@ fun formals({accesslist=l, ...}: frame) = !l (* COMPLETADO *)
 fun acclist({accesslist=l, ...}:frame,acc: access) = let val _ = l:=(!l@[acc]) in acc end
 
 fun string(l, s) = l^tigertemp.makeString(s)^"\n"
-fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST k))
+fun exp(InFrame k) e = MEM(BINOP(MINUS, TEMP(fp), CONST(k)))
   | exp(InReg l)   e = TEMP l
 fun build_seq [] = EXP (CONST 0)
   | build_seq [s] = s
@@ -94,12 +94,9 @@ fun procEntryExit1 (f: frame,body) = (*body*)(*COMPLETADO*)
         fun move_args [] _     = []
           | move_args (x::xs) n = let val argsregs_size = List.length argsregs
                                       val dst = if n < argsregs_size then TEMP (List.nth(argsregs,n))
-                                               else MEM(BINOP(PLUS, CONST ((n-argsregs_size)*8+16), TEMP fp))
+                                               else MEM(BINOP(MINUS, CONST ((n-argsregs_size)*8+16), TEMP fp))
                                  in MOVE(exp x fp, dst) :: (move_args xs (n+1))  end
-        val args_connect = [COMMENT("Cargando los argumentos")] @ (move_args (!(#accesslist f)) 0)
-        val _ = List.map (fn x => case x of
-                                    InReg l => print("InReg "^l^"\n")
-                                  | InFrame k => print("InFrame "^Int.toString(k)^"\n")) (!(#accesslist f))
+        val args_connect = [COMMENT("Cargando los argumentos")] @ (move_args (!(#accesslist f)) 0) @ [COMMENT("Fin de los argumentos")]
         val new_temps = List.tabulate(List.length calleesaves , fn _ => TEMP (tigertemp.newtemp()))
         val save_calleesaves = if frame_name = "_tigermain" then []
                                else [COMMENT("Guardando registros calleesaves")] @ List.map MOVE(ListPair.zip(new_temps,List.map TEMP calleesaves))
