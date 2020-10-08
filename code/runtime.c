@@ -103,12 +103,13 @@ long *_initArray(long size, long init)
 	a[0] = size;
     for (i = 1; i <= size; i++)
 		a[i] = init;
+	//~ fprintf(stderr, "size:%ld init:%ld a[-1]:%ld\n", size, init, a[0]);
     return a+1;
 }
 void _checkIndexArray(long *a, long i)
 {
 	if(i<0 || i>a[-1]) {
-		fprintf(stderr, "indice %ld excedido!\n", i);
+		fprintf(stderr, "indice %ld excedido %ld!\n", i, a[-1]);
 		exit(-1);
 	}
 }
@@ -117,11 +118,12 @@ long *_allocRecord(long ctos, ...)
     int i;
     long *p, *a;
 	va_list va;
-    p = a = malloc(ctos*sizeof(long));
+    p = a = malloc(ctos*sizeof(long)+1);
 	va_start(va, ctos);
     for (i = 0; i < ctos; i ++)
 		*p++ = va_arg(va, long);
-    return a;
+	//~ fprintf(stderr, "Alloc Record:%ld\n",(long)a);
+	return a;
 }
 void _checkNil(long* r)
 {

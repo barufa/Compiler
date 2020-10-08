@@ -177,12 +177,12 @@ in
 			BINOP(MUL, TEMP ri, CONST tigerframe.wSz)))))
 end
 
-fun recordExp l = (*COMPLETADO*)
-	let fun cmp ((_,nx,_),(_,ny,_)) = Int.compare (nx,ny)
-			val campos = map (fn (exp,n) => let val tmp = TEMP (newtemp()) in (MOVE(tmp,unEx exp),n,tmp) end) l
-			val camposreg = map (#3) campos
-			val campos = map (fn (e,_,_) => e) (Listsort.sort cmp campos)
-	in Ex(ESEQ(seq campos,externalCall("_allocRecord",CONST(length (camposreg))::camposreg))) end
+fun recordExp l =(*COMPLETADO*)
+let val sort_l = Listsort.sort (fn((_,a),(_,b))=> Int.compare(a,b)) l
+    val campos = map (unEx o (#1)) sort_l
+in
+    Ex (externalCall("_allocRecord", [CONST(length(campos))]@campos))
+end
 
 fun arrayExp{size, init} =
 let

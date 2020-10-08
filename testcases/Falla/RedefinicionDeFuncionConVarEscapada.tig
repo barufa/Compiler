@@ -1,9 +1,0 @@
-/* complejizamos test48.tig */
-let
-	function g (a : int) : int = 3
-	var b:=g(1)
-	type t = int
-	function g (a : int) : int = 6+b
-in
-	g(5)
-end
