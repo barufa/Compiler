@@ -280,7 +280,7 @@ fun color (instr, frame) =
                     activeMoves := Splayset.delete(!activeMoves,m);
                     frozenMoves := Splayset.add(!frozenMoves,m);
                     if (Splayset.isEmpty(NodeMoves v) andalso (GetDegree v) < K)
-                    then (freezeWorklist := Splayset.delete(!freezeWorklist,v);
+                    then (freezeWorklist := Splayset.intersection(!freezeWorklist,stringToSet v);
                           simplifyWorklist := Splayset.add(!simplifyWorklist,v))
                     else ()
                   end
