@@ -1,0 +1,7 @@
+let type a = {a : int}
+    var  a := 0
+    function a (a : a) : a = a{a = a.a+1}
+    function b (n:a):int=n.a
+in
+    b(a (a{a = 6}))
+end
