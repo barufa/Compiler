@@ -429,13 +429,13 @@ fun color (instr, frame) =
         val _ = liveOut := lo
         (* Calculamos todos los temporarios que se usan en instrs *)
         val temps = List.foldl (fn (n,set) => Splayset.addList(set,Splaymap.find(def,n) @ Splaymap.find(use,n))) (Splayset.empty String.compare) nodes
-        (* Eliminamos de temps los temporarios precoloreados *)
-        val temps = Splayset.difference(temps,!precolored)
-        (* Inicializamos initial con los temporales*)
-        val _ = Splayset.app (fn t => initial := Splayset.add(!initial,t)) temps
         (* Agregamos los temporales a spillCost con costo 1.
            Si ya estan en spillCost no se modifica para no pisar los costos en las llamadas recursivas. *)
         val _ = Splayset.app (fn t => addSpillCost t 1) temps
+        (* Eliminamos de temps los temporarios precoloreados *)
+        val temps = Splayset.difference(temps,!precolored)
+        (* Inicializamos initial con los temporales sin los precoloreados*)
+        val _ = Splayset.app (fn t => initial := Splayset.add(!initial,t)) temps
       in () end
 
     (* Init inicializa todas la variables para cuando se vuelva a llamar main
