@@ -99,9 +99,9 @@ fun procEntryExit1 (f: frame,body) = (*body*)(*COMPLETADO*)
         val args_connect = [COMMENT("Cargando los argumentos")] @ (move_args (!(#accesslist f)) 0) @ [COMMENT("Fin de los argumentos")]
         val new_temps = List.tabulate(List.length calleesaves , fn _ => TEMP (tigertemp.newtemp()))
         val save_calleesaves = if frame_name = "_tigermain" then []
-                               else [COMMENT("Guardando registros calleesaves")] @ List.map MOVE(ListPair.zip(new_temps,List.map TEMP calleesaves))
+                               else [COMMENT("Guardando registros calleesaves")] @ List.map MOVE(ListPair.zip(new_temps,List.map TEMP calleesaves)) @ [COMMENT("Fin de registros calleesaves")]
         val restore_calleesaves = if frame_name = "_tigermain" then []
-                                  else [COMMENT("Restaurando registros calleesaves")] @ List.map MOVE(ListPair.zip(List.map TEMP calleesaves,new_temps))
+                                  else [COMMENT("Restaurando registros calleesaves")] @ List.map MOVE(ListPair.zip(List.map TEMP calleesaves,new_temps)) @ [COMMENT("Fin de registros calleesaves")]
     in build_seq(save_calleesaves @ args_connect @ [body] @ restore_calleesaves) end
 
 fun procEntryExit2 (frame,instr) = instr (*COMPLETADO*)
