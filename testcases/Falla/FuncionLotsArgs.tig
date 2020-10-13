@@ -10,8 +10,16 @@ let
     var j:=9
     var k:=10
     function f(a1:int,a2:int,a3:int,a4:int,a5:int,a6:int,a7:int,a8:int,a9:int,a10:int):int = 
-       (for i := 1 to (a1+a2+a3+a4+a5+a6+a7+a8+a9+a10)
-	 do (print ("*"));
+       (print(chr(64+a1));
+	print(chr(64+a2));
+	print(chr(64+a3));
+	print(chr(64+a4));
+	print(chr(64+a5));
+	print(chr(64+a6));
+	print(chr(64+a7));
+	print(chr(64+a8));
+	print(chr(64+a9));
+	print(chr(64+a10));
 	print("\n");1)
 in f(a,b,c,d,e,g,h,i,j,k) end
 
