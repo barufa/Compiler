@@ -18,8 +18,7 @@ let val ilist = ref ([]:instr list)
     (* Pagina 204 *)
     fun munchStm (MOVE (TEMP t, e1)) = emitM("movq %'s0, %'d0",munchExp e1,t)
       | munchStm (MOVE (MEM e1, e2)) = emitO("movq %'s1, (%'s0)",[munchExp e1,munchExp e2],[],NONE)
-      | munchStm (EXP (CALL (NAME n, args))) = (emitO("xorq %'d0, %'d0 #cnt argumentos de punto flotante",[],[rv],NONE);
-                                                munchCall n args)
+      | munchStm (EXP (CALL (NAME n, args))) = munchCall n args
       | munchStm (EXP e) = (munchExp e; ())
       | munchStm (JUMP (NAME n, ln)) = emitO("jmp "^n,[],[],SOME ln)
       | munchStm (CJUMP (oper, e1, e2, l1, l2)) =
@@ -82,7 +81,7 @@ let val ilist = ref ([]:instr list)
               | args2regs args [] = args2stack(rev(args))(*ya use los 6 regitros para argumentos*)
               | args2regs (x::args) (r::regs) = let val _ = munchStm(MOVE (TEMP r, x)) in r ::(args2regs args regs) end
             val src_reg = args2regs argss argsregs
-        in emitO("call "^n,src_reg,callersaves,NONE) end
+        in emitO("xorq %'d0, %'d0 #cnt argumentos de punto flotante",[],[rv],NONE);emitO("call "^n,src_reg,callersaves,NONE) end
 
 in munchStm stm; rev(!ilist) end
 
