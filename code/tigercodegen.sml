@@ -44,14 +44,28 @@ let val ilist = ref ([]:instr list)
     and munchExp (CONST n) = result ( fn r => emitO("movq $"^(Int.toString n)^", %'d0",[],[r],NONE))
       | munchExp (NAME n) = result (fn r => emitO("leaq "^n^"(%rip), %'d0",[],[r],NONE))
       | munchExp (TEMP t) = t
+      | munchExp (BINOP (PLUS, e1, CONST n)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
+                                                                 emitO("addq $"^Int.toString n^", %'d0",[r],[r],NONE)))
+      | munchExp (BINOP (PLUS, CONST n, e2)) = munchExp (BINOP (PLUS, e2, CONST n))
       | munchExp (BINOP (PLUS, e1, e2)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
                                                             emitO("addq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
+      | munchExp (BINOP (MINUS, e1, CONST n)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
+                                                                  emitO("subq $"^Int.toString n^", %'d0",[r],[r],NONE)))
+      | munchExp (BINOP (MINUS, CONST n, e2)) = result ( fn r => (emitO("movq $"^Int.toString n^", %'d0",[],[r],NONE);
+                             												              emitO("subq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
       | munchExp (BINOP (MINUS, e1, e2)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
 												             emitO("subq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
+      | munchExp (BINOP (MUL, e1, CONST n)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
+                                                                emitO("imulq $"^Int.toString n^", %'d0",[r],[r],NONE)))
+      | munchExp (BINOP (MUL, CONST n, e2)) = munchExp (BINOP (MUL, e2, CONST n))
       | munchExp (BINOP (MUL, e1, e2)) =
                 result ( fn r =>
                     (emitM("movq %'s0, %'d0",munchExp e1,r);
                     emitO("imulq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
+      | munchExp (BINOP (DIV, e1, CONST n)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
+                                                                emitO("idivq $"^Int.toString n^", %'d0",[r],[r],NONE)))
+      | munchExp (BINOP (DIV, CONST n, e2)) = result ( fn r => (emitO("movq $"^Int.toString n^", %'d0",[],[r],NONE);
+                             												            emitO("idivq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
       | munchExp (BINOP (DIV, e1, e2)) =
                 result ( fn r =>
                        (emitM("movq %'s0, %'d0",munchExp e1,r);
