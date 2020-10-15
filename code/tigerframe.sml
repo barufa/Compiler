@@ -42,7 +42,7 @@ val wSz = 8				     (* word size in bytes *)
 val log2WSz = 3				 (* base two logarithm of word size in bytes *)
 *)
 
-val localsInicial = 0	 (* words *)
+val localsInicial = 1	 (* words *)
 val localsGap = ~8 		 (* bytes *)
 
 (* COMPLETAR registros *)
