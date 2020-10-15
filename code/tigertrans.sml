@@ -149,7 +149,7 @@ fun intExp i = Ex (CONST i)
 fun simpleVar(InFrame offset, nivel) = (*COMPLETADO*)
   let fun staticLink 0 = TEMP fp
 			| staticLink n = (case n > 0 of
-													true => MEM(BINOP(MINUS,staticLink (n-1),CONST fpPrevLev))
+													true => MEM(BINOP(PLUS,staticLink (n-1),CONST fpPrevLev))
 													| false => raise Fail "Error interno 0 - tigertrans.sml")
 			val instr = MEM(BINOP(PLUS,staticLink (getActualLev()-nivel),CONST offset))
 	in Ex(instr) end

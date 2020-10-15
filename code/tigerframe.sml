@@ -33,7 +33,7 @@ datatype frag = PROC of {body: tigertree.stm, frame: frame}
 	| STRING of tigertemp.label * string
 
 val fpPrev = 0				 (* offset (bytes) *)
-val fpPrevLev = 16	         (* offset (bytes) *)
+val fpPrevLev = ~8     (* offset (bytes) *)
 val wSz = 8				     (* word size in bytes *)
 val log2WSz = 3				 (* base two logarithm of word size in bytes *)
 (*
