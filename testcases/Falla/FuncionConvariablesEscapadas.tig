@@ -1,6 +1,0 @@
-let
-    var a:=0
-    var b:=5
-    function g(x:int,y:int):int = let function f(t:int):int = x+a
-				  in f(b)+1 end
-in g(a,b) end
