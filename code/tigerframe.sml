@@ -116,7 +116,7 @@ fun procEntryExit3 (frame,instr) =(*COMPLETADO*)
                  "#Prologo\n" ^
                  "\tpushq %rbp\n" ^
                  "\tmovq %rsp, %rbp\n" ^
-                 "\tsubq $" ^ Int.toString(size) ^", %rsp\n#Cuerpo\n",
+                 "\taddq $~" ^ Int.toString(size) ^", %rsp\n#Cuerpo\n",
       body = instr,
       epilog = "#Epilogo\n" ^
                "\tmovq %rbp, %rsp\n" ^
