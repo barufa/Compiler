@@ -337,9 +337,11 @@ fun color (instr, frame) =
         val offsetTable = Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,tigerframe.allocLocal frame true)) (Splaymap.mkDict String.compare) (!spilledNodes)
         (* Funcion para obtener el offset del temporario temp en la pila.
            Lo devuelve como una string. *)
+        (* Si el obset es negativo le agregamos parentesis para que compile, ya que no podemos hacer valor absoluto 
+           y ponerle el - adelante porque el comportamiento de (~8)(%rbp) no es igual a -8(%rbp) *)
         fun findOffset temp = case Splaymap.find(offsetTable,temp) of
                                 tigerframe.InFrame k => (case k < 0 of
-                                                          true => "-"^Int.toString(Int.abs(k))
+                                                          true => "("^Int.toString(k)^")"
                                                           | false => Int.toString k)
                                 | tigerframe.InReg _ => raise Fail ("tigercolor: No deberia pasar findOffset\n")
         (* Cambia todas las apariciones del temporario temp por nuevos temporarios *)
