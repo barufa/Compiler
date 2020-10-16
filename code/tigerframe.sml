@@ -82,7 +82,7 @@ fun formals({accesslist=l, ...}: frame) = !l (* COMPLETADO *)
 fun acclist({accesslist=l, ...}:frame,acc: access) = let val _ = l:=(!l@[acc]) in acc end
 
 fun string(l, s) = l^tigertemp.makeString(s)^"\n"
-fun exp(InFrame k) e = MEM(BINOP(MINUS, TEMP(fp), CONST(k)))
+fun exp(InFrame k) e = MEM(BINOP(PLUS, TEMP(fp), CONST(k)))
   | exp(InReg l)   e = TEMP l
 fun build_seq [] = EXP (CONST 0)
   | build_seq [s] = s
