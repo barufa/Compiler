@@ -8,7 +8,7 @@ type allocation = (tigertemp.temp,tigerframe.register) Splaymap.dict
 fun color (instr, frame) =
   let
     val _ = print("\n#####################################\n")
-    val _ = print("Coloreando\n")
+    val _ = print("Coloreando "^(tigerframe.name frame)^"\n")
     fun edgeCmp ((t1,t2),(t3,t4)) = if (String.compare(t1,t3) = EQUAL) then String.compare(t2,t4) else String.compare(t1,t3)
 
     (*  *)
