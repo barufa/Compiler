@@ -380,7 +380,7 @@ fun color (instr, frame) =
           in addStore inst temp ilist dlist end
         | addStore (IMOVE{assem,dst,src}::inst) temp ilist dlist =
           let
-            val l = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then [IOPER{assem="movq %'s0, "^findOffset temp^"(%'s1)",src=[dst,tigerframe.fp],dst=[],jump=NONE},IMOVE{assem=assem,dst=dst,src=src}] else [IMOVE{assem=assem,dst=dst,src=src}]
+            val l = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then [IOPER{assem="movq %'s0, "^findOffset temp^"(%'s1)",src=[src,tigerframe.fp],dst=[],jump=NONE}] else [IMOVE{assem=assem,dst=dst,src=src}]
             val dlist = if List.exists (fn n => String.compare(n,dst) = EQUAL) dlist then List.filter (fn n => not(String.compare(n,dst) = EQUAL)) dlist else dlist
             val ilist = l @ ilist
           in addStore inst temp ilist dlist end
