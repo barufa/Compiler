@@ -1,0 +1,16 @@
+/* define valid mutually recursive procedures */
+let
+	var a := 97
+	var b := 11
+	function suma(x : int,y : int):int = x+y
+	function resta(x : int,y : int):int = x-y
+	function multiplicacion(x : int,y : int):int = x*y
+	function division(x : int,y : int):int = x/y
+	function negacion(x : int):int = -x
+in
+	(if suma(a,b) = 108 then print("Funciona la suma\n") else print("Falla la suma\n"));
+	(if resta(a,b) = 86 then print("Funciona la resta\n") else print("Falla la resta\n"));
+	(if multiplicacion(a,b) = 1067 then print("Funciona la multiplicion\n") else print("Falla la multiplicion\n"));
+	(if division(a,b) = 8 then print("Funciona la division\n") else print("Falla la division\n"));
+	(if negacion(a) = -97 then print("Funciona la negacion\n") else print("Falla la negacion\n"));0
+end
