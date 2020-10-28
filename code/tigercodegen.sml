@@ -62,14 +62,19 @@ let val ilist = ref ([]:instr list)
                 result ( fn r =>
                     (emitM("movq %'s0, %'d0",munchExp e1,r);
                     emitO("imulq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
-      | munchExp (BINOP (DIV, e1, CONST n)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,r);
-                                                                emitO("idivq $"^Int.toString n^", %'d0",[r],[r],NONE)))
-      | munchExp (BINOP (DIV, CONST n, e2)) = result ( fn r => (emitO("movq $"^Int.toString n^", %'d0",[],[r],NONE);
-                             												            emitO("idivq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
-      | munchExp (BINOP (DIV, e1, e2)) =
-                result ( fn r =>
-                       (emitM("movq %'s0, %'d0",munchExp e1,r);
-                        emitO("idivq %'s1, %'d0",[r, munchExp e2],[r],NONE)))
+      | munchExp (BINOP (DIV, e1, CONST n)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,"rax");
+                                                                emitO("movq $0, %'d0",[],["rdx"],NONE);
+                                                                emitO("movq $"^Int.toString n^", %'d0",[],[r],NONE);
+                                                                emitO("idivq %'s2, %rax",["rax","rdx",r],["rax","rdx"],NONE);
+                                                                emitM("movq %'s0, %'d0","rax",r)))
+      | munchExp (BINOP (DIV, CONST n, e2)) = result ( fn r => (emitO("movq $"^Int.toString n^", %'d0",[],["rax"],NONE);
+                                                                emitO("movq $0, %'d0",[],["rdx"],NONE);
+                                                                emitO("idivq %'s2, %rax",["rax","rdx",munchExp e2],["rax","rdx"],NONE);
+                                                                emitM("movq %'s0, %'d0","rax",r)))
+      | munchExp (BINOP (DIV, e1, e2)) = result ( fn r => (emitM("movq %'s0, %'d0",munchExp e1,"rax");
+                                                           emitO("movq $0, %'d0",[],["rdx"],NONE);
+                                                           emitO("idivq %'s2, %rax",["rax","rdx",munchExp e2],["rax","rdx"],NONE);
+                                                           emitM("movq %'s0, %'d0","rax",r)))
       | munchExp (MEM e) = result (fn r => emitM("movq (%'s0), %'d0",munchExp e,r))
 	  | munchExp (CALL f) = result (fn r => let val _ = munchStm(EXP(CALL f)) in emitM("movq %'s0, %'d0",rv,r) end)
       | munchExp (ESEQ _) = raise Fail "ESEQ no deberia aparecer aqui."
