@@ -7,8 +7,8 @@ type allocation = (tigertemp.temp,tigerframe.register) Splaymap.dict
 
 fun color (instr, frame) =
   let
-    val _ = print("\n#####################################\n")
-    val _ = print("Coloreando "^(tigerframe.name frame)^"\n")
+(*    val _ = print("\n#####################################\n")*)
+(*    val _ = print("Coloreando "^(tigerframe.name frame)^"\n")*)
     fun edgeCmp ((t1,t2),(t3,t4)) = if (String.compare(t1,t3) = EQUAL) then String.compare(t2,t4) else String.compare(t1,t3)
 
     (*  *)
@@ -199,7 +199,7 @@ fun color (instr, frame) =
     fun Simplify () =
       let
         val n = getItemToSimplify()
-        val _ = print("Simplify de "^n^"\n")
+(*        val _ = print("Simplify de "^n^"\n")*)
       in
         simplifyWorklist := Splayset.delete(!simplifyWorklist,n);
         PushSelectStack n;
@@ -226,7 +226,7 @@ fun color (instr, frame) =
 
     fun Combine (u,v) =
       let
-        val _ = print("Combinando ("^u^","^v^")\n")
+(*        val _ = print("Combinando ("^u^","^v^")\n")*)
         val _ = if (Splayset.member(!freezeWorklist,v))
                 then (freezeWorklist := Splayset.delete(!freezeWorklist,v))
                 else (spillWorklist := Splayset.delete(!spillWorklist,v))
@@ -244,7 +244,7 @@ fun color (instr, frame) =
       let
         val m = getItem (!worklistMoves)
         val (x,y) = m
-        val _ = print("Coalesce de ("^x^","^y^")\n")
+(*        val _ = print("Coalesce de ("^x^","^y^")\n")*)
         val x = GetAlias x
         val y = GetAlias y
         val (u,v) = if Splayset.member(!precolored,y) then (y,x) else (x,y)
@@ -289,7 +289,7 @@ fun color (instr, frame) =
     fun Freeze () =
       let
         val u = getItem (!freezeWorklist)
-        val _ = print("Freeze de "^u^"\n")
+(*        val _ = print("Freeze de "^u^"\n")*)
       in
         freezeWorklist := Splayset.delete(!freezeWorklist,u);
         simplifyWorklist := Splayset.add(!simplifyWorklist,u);
@@ -299,7 +299,7 @@ fun color (instr, frame) =
     fun SelectSpill () =
       let
         val m = getItemToSpill()
-        val _ = print("SelectSpill de "^m^"\n")
+(*        val _ = print("SelectSpill de "^m^"\n")*)
       in
         spillWorklist := Splayset.delete(!spillWorklist,m);
         simplifyWorklist := Splayset.add(!simplifyWorklist,m);
@@ -308,16 +308,16 @@ fun color (instr, frame) =
 
     fun AssignColors () =
       let
-        val _ = print("Asignando colores\n")
+(*        val _ = print("Asignando colores\n")*)
         fun aux () =
           let
             val n = PopSelectStack ()
             val okColors = ref (Splayset.addList(Splayset.empty String.compare,registers))
             val _ = Splayset.app (fn w => if Splayset.member(Splayset.union(!coloredNodes,!precolored),GetAlias w) then (okColors := Splayset.difference(!okColors,stringToSet (GetColor(GetAlias(w))))) else ()) (GetAdjList n)
             val _ = if Splayset.isEmpty(!okColors)
-                    then (print("Moviendo \""^n^"\" a spilledNodes\n");
+                    then ((*print("Moviendo \""^n^"\" a spilledNodes\n");*)
                           spilledNodes := Splayset.add(!spilledNodes,n))
-                    else (print("Asignandole un color a \""^n^"\"\n");
+                    else ((*print("Asignandole un color a \""^n^"\"\n");*)
                           coloredNodes := Splayset.add(!coloredNodes,n);
                           color := Splaymap.insert(!color,n,getItem (!okColors)))
           in () end
@@ -332,7 +332,7 @@ fun color (instr, frame) =
 
     fun RewriteProgram instrs =
       let
-        val _ = print("Reescribiendo programa\n")
+(*        val _ = print("Reescribiendo programa\n")*)
         (* Guardamos los spilledNodes en la pila *)
         val offsetTable = Splayset.foldl (fn (n,dic) => Splaymap.insert(dic,n,tigerframe.allocLocal frame true)) (Splaymap.mkDict String.compare) (!spilledNodes)
         (* Funcion para obtener el offset del temporario temp en la pila.
@@ -423,7 +423,7 @@ fun color (instr, frame) =
 
     fun LivenessAnalysis instrs =
       let
-        val _ = print("Calculando liveness analysis\n")
+(*        val _ = print("Calculando liveness analysis\n")*)
         val (fgraph,nodes) = tigerflow.instr2graph instrs
         val (ig,lo) = tigerliveness.interferenceGraph fgraph
         val {control, def, use, ismove} = fgraph
@@ -490,8 +490,8 @@ fun color (instr, frame) =
       end
 
     val instrucciones = Main instr
-    val _ = print("Fin del coloreo\n")
-    val _ = print("#####################################\n")
+(*    val _ = print("Fin del coloreo\n")*)
+(*    val _ = print("#####################################\n")*)
   in
     (instrucciones,!color)
   end
