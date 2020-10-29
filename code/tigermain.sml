@@ -103,6 +103,9 @@ fun main(args) =
               val _ = printAssem salida ("##FINISH##\n")
             in TextIO.closeOut salida end
 
+    (* Compilamos el archivo .s *)
+    val _ = Process.system ("gcc -o "^filename^" "^filename^".s runtime.c")
+
     val _ = if inter then tigerinterp.inter flow proclist stringlist
             else ()
   in
