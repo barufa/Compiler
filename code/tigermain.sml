@@ -36,8 +36,7 @@ fun main(args) =
     val _ = transProg(expr)
     val _ = if arbol then tigerpp.exprAst expr else ()
     val lfrag = tigertrans.getResult()
-    fun funcanon(x) = if canon then tigercanon.traceSchedule(tigercanon.basicBlocks(tigercanon.linearize x))
-                      else tigercanon.linearize x
+    fun funcanon(x) = tigercanon.traceSchedule(tigercanon.basicBlocks(tigercanon.linearize x))
     fun split (l::ls) t s =
       (case l of
          tigerframe.PROC {body,frame} => split ls (t@[(funcanon body,frame)]) s
