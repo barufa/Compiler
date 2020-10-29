@@ -103,7 +103,8 @@ fun main(args) =
             in TextIO.closeOut salida end
 
     (* Compilamos el archivo .s *)
-    val _ = Process.system ("gcc -o "^filename^" "^filename^".s runtime.c")
+    val status = Process.system ("gcc -o "^filename^" "^filename^".s runtime.c")
+    val _ = if not(Process.isSuccess status) then raise Fail "Error al compilar\n" else ()
 
     val _ = if inter then tigerinterp.inter flow proclist stringlist
             else ()
