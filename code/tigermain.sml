@@ -72,30 +72,37 @@ fun main(args) =
           in b end
       in List.filter (fn s => not(String.compare(s,"")=EQUAL)) (List.map (fn i => if checkMove i then "" else i) instrs) end
 
-      val _ = if assem then let fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs
-                                fun escape s = List.foldr (fn (x, acc) => case x of
-                                                                           #"\n" => "\\n"^acc
-                                                                          |  _  => String.str(x)^acc) "" (String.explode s)
-                                val _ = allocLocal
-                                val proc_frame = List.map (fn (bl,f) => let val il = List.map (fn b =>  let val instrlist = codegen f b
-                                                                                                        in procEntryExit2(f,instrlist) end) bl
-                                                                        in (flat il,f) end) proclist
-                                val colored_proc = List.map (fn (body,f) => let val (color_inst,temp2reg) = color (body,f)(*(color_inst,temp2reg) = (body,Splaymap.mkDict String.compare)*)(*(color_inst,temp2reg) = color (body,f)*)
-                                                                                val proc_l = procEntryExit3(f,color_inst)
-                                                                            in (proc_l,temp2reg) end ) proc_frame
-                                val _ = print("##START##\n")
-                                val _ = print("\n.data\n")
-                                val _ = List.map (fn (l,s) => print(l^":\t.quad "^Int.toString(String.size s)^"\n\t.string \""^(escape s)^"\"\n")) stringlist
-                                val _ = print("\n.text\n")
-                                val _ = List.map (fn (proc,temp2reg) => let val _ = print(#prolog proc)
-                                                                            val instrlist = (List.map (format temp2reg) (#body proc)) @ ["\n\n"]
-                                                                            val instrlist = eliminateMoves instrlist
-                                                                            val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
-                                                                            val _ = print(instructions)
-                                                                            val _ = print(#epilog proc)
-                                                                        in () end) colored_proc
-                            in print("##FINISH##\n") end
-              else ()
+    val filename = List.hd (String.tokens (fn c => Char.compare(c,#".")=EQUAL) (List.last (String.tokens (fn c => Char.compare(c,#"/")=EQUAL) (List.hd l8))))
+    val _ = let
+              val salida = TextIO.openOut (filename^".s")
+              (* Funcion que se encarga de guardar la string s en el archivo os que representa el .s.
+                 Y si assem esta definido tambien lo imprime en pantalla para cumplir con la funcion del -assem. *)
+              fun printAssem os s = if assem then (TextIO.output(os, s);print s) else TextIO.output(os, s) 
+              fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs
+              fun escape s = List.foldr (fn (x, acc) => case x of
+                                                         #"\n" => "\\n"^acc
+                                                        |  _  => String.str(x)^acc) "" (String.explode s)
+              val _ = allocLocal
+              val proc_frame = List.map (fn (bl,f) => let val il = List.map (fn b =>  let val instrlist = codegen f b
+                                                                                      in procEntryExit2(f,instrlist) end) bl
+                                                      in (flat il,f) end) proclist
+              val colored_proc = List.map (fn (body,f) => let val (color_inst,temp2reg) = color (body,f)(*(color_inst,temp2reg) = (body,Splaymap.mkDict String.compare)*)(*(color_inst,temp2reg) = color (body,f)*)
+                                                              val proc_l = procEntryExit3(f,color_inst)
+                                                          in (proc_l,temp2reg) end ) proc_frame
+              val _ = printAssem salida "##START##\n"
+              val _ = printAssem salida "\n.data\n"
+              val _ = List.map (fn (l,s) => printAssem salida (l^":\t.quad "^Int.toString(String.size s)^"\n\t.string \""^(escape s)^"\"\n")) stringlist
+              val _ = printAssem salida "\n.text\n"
+              val _ = List.map (fn (proc,temp2reg) => let val _ = printAssem salida (#prolog proc)
+                                                          val instrlist = (List.map (format temp2reg) (#body proc)) @ ["\n\n"]
+                                                          val instrlist = eliminateMoves instrlist
+                                                          val instructions = List.foldr (fn (x, acc) => ("\t"^x^"\n")^acc) "" instrlist
+                                                          val _ = printAssem salida instructions
+                                                          val _ = printAssem salida (#epilog proc)
+                                                      in () end) colored_proc
+              val _ = printAssem salida ("##FINISH##\n")
+            in TextIO.closeOut salida end
+
     val _ = if inter then tigerinterp.inter flow proclist stringlist
             else ()
   in
