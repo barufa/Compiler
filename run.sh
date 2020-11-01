@@ -13,6 +13,7 @@ cd code
 make clean
 make
 mv "$dir/code/tiger" "$dir/tiger"
+cp "$dir/code/runtime.c" "$dir/runtime.c"
 make clean
 cd ..
 clear
@@ -24,9 +25,12 @@ echo -e "${green}${bold}+++GOOD CASES+++${normal}"
 echo -e "${green}================${nocolor}"
 for i in $(ls "$dir/testcases/Bien" -C1)
 do
+	file=$(basename $i .tig)
 	echo "------------------------------------------"
-	echo -e "Programa ${green}${bold}$i${normal}${nocolor}:"
-	./tiger -inter -canon < "$dir/testcases/Bien/$i"
+	echo -e "Programa ${green}${bold}$file${normal}${nocolor}:"
+	./tiger "$dir/testcases/Bien/$i"
+	./$file
+	rm -f "$dir/$file" "$dir/$file.s"
 	echo "------------------------------------------"
 done
 
@@ -40,3 +44,5 @@ do
 	./tiger -inter -canon < "$dir/testcases/Mal/$i"
 	echo "------------------------------------------"
 done
+
+rm -f "$dir/runtime.c" "$dir/tiger"

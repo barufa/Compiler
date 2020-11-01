@@ -56,11 +56,11 @@ fun main(args) =
             else ()
 
     (* Funcion que eliminas las instrucciones move innecesarias (cuando se mueve el valor de un registro a ese mismo registro) *)
-    fun eliminateMoves instrs = 
+    fun eliminateMoves instrs =
       let
         (* Devuelve true si i es una instruccion move que mueve el valor de un registro hacia el mismo registro.
            Sino devuelve false. *)
-        fun checkMove i = 
+        fun checkMove i =
           let
             val a = String.tokens (fn c => Char.compare(c,#"%")=EQUAL) i
             val a0 = if List.length a > 0 then List.nth(a,0) else ""
@@ -76,7 +76,7 @@ fun main(args) =
               val salida = TextIO.openOut (filename^".s")
               (* Funcion que se encarga de guardar la string s en el archivo os que representa el .s.
                  Y si assem esta definido tambien lo imprime en pantalla para cumplir con la funcion del -assem. *)
-              fun printAssem os s = if assem then (TextIO.output(os, s);print s) else TextIO.output(os, s) 
+              fun printAssem os s = if assem then (TextIO.output(os, s);print s) else TextIO.output(os, s)
               fun flat xs = List.foldr (fn (x, acc) => x @ acc) [] xs
               fun escape s = List.foldr (fn (x, acc) => case x of
                                                          #"\n" => "\\n"^acc
@@ -103,7 +103,7 @@ fun main(args) =
             in TextIO.closeOut salida end
 
     (* Compilamos el archivo .s *)
-    val status = Process.system ("gcc -o "^filename^" "^filename^".s runtime.c")
+    val status = Process.system ("gcc -o "^filename^" "^filename^".s runtime.c -Og -g3 -ggdb")
     val _ = if not(Process.isSuccess status) then raise Fail "Error al compilar\n" else ()
 
     val _ = if inter then tigerinterp.inter flow proclist stringlist
