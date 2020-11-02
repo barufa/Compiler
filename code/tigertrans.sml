@@ -160,8 +160,8 @@ fun varDec(acc) = simpleVar(acc, getActualLev())
 fun fieldVar(var, field) = (*COMPLETADO*)
 	let val tmp = newtemp()
 			val var' = unEx var
-			val instr = [EXP(externalCall("_checkNil", [var']))]
-	in Ex(ESEQ(seq instr,MEM(BINOP(PLUS,var',BINOP(MUL,CONST field,CONST wSz))))) end
+			val instr = [MOVE(TEMP tmp, var'),EXP(externalCall("_checkNil", [TEMP tmp]))]
+	in Ex(ESEQ(seq instr,MEM(BINOP(PLUS,TEMP tmp,BINOP(MUL,CONST field,CONST wSz))))) end
 
 fun subscriptVar(arr, ind) =
 let
