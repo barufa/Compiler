@@ -24,9 +24,9 @@ let
 
 	function swp(v : vector,x : int,y : int) =
 	(let 
-			var tmp:=v[x]/*Falla el valor de x e y*/
+			var tmp:=v[x]/*Falla la direccion del vector*/
 		in 
-			(v[x]:=v[y];v[y]:=tmp)
+			v[x]:=v[y];v[y]:=tmp
 	end)
 
 	function sort(vec : vector,len : int) =
