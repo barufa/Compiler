@@ -200,11 +200,11 @@ fun callExp (name,false,isproc,lev:level,args) = (*COMPLETADO*)
 				val inssl = [MOVE(tmpsl,
 													case Int.compare(getActualLev(),getlevel lev) of
 														LESS => TEMP fp
-														| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (2*wSz)))
+														| EQUAL => MEM(BINOP(PLUS,TEMP fp,CONST (tigerframe.fpPrevLev)))
 														| GREATER =>
 															let val tmp = TEMP (newtemp())
-																	fun recorre 0 = []
-																	|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (2*wSz))))::recorre (n-1)
+																	fun recorre 0 = [MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (tigerframe.fpPrevLev))))]
+																	|   recorre n = MOVE(tmp,MEM(BINOP(PLUS,tmp,CONST (tigerframe.fpPrevLev))))::recorre (n-1)
 															in ESEQ(seq ((MOVE(tmp,TEMP fp))::(recorre (getActualLev()-getlevel lev))),tmp) end
 											)]
 				val callexp = if isproc then Ex(ESEQ(seq (argins@inssl),CALL (NAME name,tmpsl::argtmp)))
