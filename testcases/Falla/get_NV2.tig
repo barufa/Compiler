@@ -1,0 +1,7 @@
+let
+    var N := 8
+    function get_N():int = N
+    function return_N():int = let
+				function toma_N():int = get_N()
+			      in toma_N() end
+in return_N() end
