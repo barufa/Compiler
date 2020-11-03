@@ -1,0 +1,52 @@
+let
+	type vector = array of int 
+	var lista:=vector[100] of 0
+
+	function printVector(vec : vector,len : int) =
+	(	(for i := 0 to len do /*Falla el valor de len. Si fijo una constante funciona*/
+		 	(print(chr(65+vec[i]));print(" "))
+		);print("\n")
+	)
+	
+	function intVector (vec : vector,len : int) =
+	(	for i := 0 to len/2 do
+			(vec[2*i]:=i;vec[2*i+1]:=len-i)
+	)
+
+	function get_max(v : vector,len : int): int =
+	(let 
+			var mx:=0
+		in 
+			((for i := 0 to len do 
+				(if v[i]>v[mx] then (mx := i;()))
+			);mx)
+	end)
+
+	function swp(v : vector,x : int,y : int) =
+	(let 
+			var tmp:=v[x]/*Falla el valor de x e y*/
+		in 
+			(v[x]:=v[y];v[y]:=tmp)
+	end)
+
+	function sort(vec : vector,len : int) =
+	(let 
+		function get_max(v : vector,len : int): int =
+		(let 
+			var mx:=0
+		in 
+			((for i := 0 to len do 
+				(if v[i]>v[mx] then (mx := i;()))
+			);mx)
+		end)
+		function swap(v : vector,x : int,y : int) =
+		(let 
+			var tmp:=2
+		in 
+			(v[x]:=tmp;v[y]:=tmp;())
+		end)
+	in 
+		(for i := 0 to len-1 do 
+			(swp(vec,len-1-i,get_max(vec,len-i))))
+	end)
+in intVector(lista,25);printVector(lista,25);sort(lista,25);printVector(lista,25);0 end
