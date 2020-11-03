@@ -19,6 +19,17 @@ cd ..
 clear
 
 #Corriendo Casos
+echo -e "${red}===============${nocolor}"
+echo -e "${red}${bold}+++BAD CASES+++${normal}"
+echo -e "${red}===============${nocolor}"
+for i in $(ls "$dir/testcases/Mal" -C1)
+do
+	echo "------------------------------------------"
+	echo -e "Programa ${red}${bold}$i${normal}${nocolor}:"
+	./tiger -inter -canon < "$dir/testcases/Mal/$i"
+	echo "------------------------------------------"
+done
+
 clear
 echo -e "${green}================${nocolor}"
 echo -e "${green}${bold}+++GOOD CASES+++${normal}"
@@ -31,17 +42,6 @@ do
 	./tiger "$dir/testcases/Bien/$i"
 	./$file
 	rm -f "$dir/$file" "$dir/$file.s"
-	echo "------------------------------------------"
-done
-
-echo -e "${red}===============${nocolor}"
-echo -e "${red}${bold}+++BAD CASES+++${normal}"
-echo -e "${red}===============${nocolor}"
-for i in $(ls "$dir/testcases/Mal" -C1)
-do
-	echo "------------------------------------------"
-	echo -e "Programa ${red}${bold}$i${normal}${nocolor}:"
-	./tiger -inter -canon < "$dir/testcases/Mal/$i"
 	echo "------------------------------------------"
 done
 
