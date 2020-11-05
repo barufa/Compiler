@@ -18,25 +18,27 @@ fun valNode n = case Splaymap.peek(!table,n) of
                  | NONE => raise Fail "No se encontro el nodo: 21354\n"
 
 type graph = {maxNumNodes: int,
-							pred: (node ,node Splayset.set) Splaymap.dict,
-							succ: (node ,node Splayset.set) Splaymap.dict}
+              pred: (node ,node Splayset.set) Splaymap.dict,
+              succ: (node ,node Splayset.set) Splaymap.dict}
 
 fun nodes ({succ,...}:graph) = List.map (#1) (Splaymap.listItems succ)
 
-fun succ ({succ,...}:graph) node = case Splaymap.peek(succ,node) of
-                                    SOME value => Splayset.listItems value
-												            | _ => raise notExistNode
+fun succ ({succ,...}:graph) node = 
+  case Splaymap.peek(succ,node) of
+    SOME value => Splayset.listItems value
+    | _        => raise notExistNode
 
-fun pred ({pred,...}:graph) node = case Splaymap.peek(pred,node) of
-												            SOME value => Splayset.listItems value
-												            | _ => raise notExistNode
+fun pred ({pred,...}:graph) node = 
+  case Splaymap.peek(pred,node) of
+    SOME value => Splayset.listItems value
+    | _        => raise notExistNode
 
 fun eq (node1,node2) = node1 = node2
 
 (* Inicializo la tabla que mapea nodos con lo que representa y luego creo el grafo *)
 fun newGraph () = {maxNumNodes = 0,
-		               pred = Splaymap.mkDict Int.compare,
-		               succ = Splaymap.mkDict Int.compare}
+                   pred = Splaymap.mkDict Int.compare,
+                   succ = Splaymap.mkDict Int.compare}
 
 (* Mapeo el nuevo nodo con lo que representa en la tabla y luego lo agrego al grafo *)
 fun newNode ({maxNumNodes,pred,succ}:graph) =
@@ -57,24 +59,28 @@ fun isNode ({maxNumNodes,pred,succ}:graph) node =
   in if a andalso b andalso c then true else false
   end
 
-fun isEdge ({succ,...}:graph) {from, to} = case Splaymap.peek(succ, from) of
-																            SOME value => Splayset.member(value,to)
-																            | NONE => raise notExistNode
+fun isEdge ({succ,...}:graph) {from, to} =
+  case Splaymap.peek(succ, from) of
+    SOME value => Splayset.member(value,to)
+    | NONE     => raise notExistNode
 
-fun isNotEdge ({succ,...}:graph) {from, to} = case Splaymap.peek(succ, from) of
-																	              SOME value => (case Splayset.member(value,to) of
-																							              		true => false
-																									              | false => true)
-																	              | NONE => raise notExistNode
+fun isNotEdge ({succ,...}:graph) {from, to} = 
+  case Splaymap.peek(succ, from) of
+    SOME value => (case Splayset.member(value,to) of
+                    true    => false
+                    | false => true)
+    | NONE     => raise notExistNode
 
-fun adj (g as {pred,succ,...}:graph) node = if isNode g node then Splayset.listItems(Splayset.union(Splaymap.find(pred,node),Splaymap.find(succ,node))) (* Chequear *)
-										                        else raise notExistNode
+fun adj (g as {pred,succ,...}:graph) node = 
+  if isNode g node 
+  then Splayset.listItems(Splayset.union(Splaymap.find(pred,node),Splaymap.find(succ,node))) (* Chequear *)
+  else raise notExistNode
 
 fun mk_edge (g as {maxNumNodes,pred,succ}:graph) {from, to} = 
   if isEdge g {from=from, to=to}
   then g
-	else {maxNumNodes = maxNumNodes,
-	     pred = Splaymap.insert(pred,to,Splayset.add(Splaymap.find(pred,to),from)),
+  else {maxNumNodes = maxNumNodes,
+       pred = Splaymap.insert(pred,to,Splayset.add(Splaymap.find(pred,to),from)),
        succ = Splaymap.insert(succ,from,Splayset.add(Splaymap.find(succ,from),to))}
 
 fun rm_edge (g as {maxNumNodes,pred,succ}:graph) {from, to} =

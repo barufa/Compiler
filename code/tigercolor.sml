@@ -143,26 +143,26 @@ fun color (instr, frame) =
                              IMOVE {...} => true
                            | _ => false
         fun aux (ILABEL{...},n) = ()
-        | aux (inst,n) =
-          let
-            val def_I = getDst inst
-            val use_I = getSrc inst
-            val liveO_I = Splaymap.find(!liveOut,n)
-          in
-            if (isMove inst) (* Si es una instruccion move, def_I y use_I tienen un solo elemento *)
-            then (
-                  moveList := Splaymap.insert(!moveList,getItem def_I,Splayset.add(GetMoveList (getItem def_I),(getItem def_I,getItem use_I)));
-                  moveList := Splaymap.insert(!moveList,getItem use_I,Splayset.add(GetMoveList (getItem use_I),(getItem def_I,getItem use_I)));
-                  worklistMoves := Splayset.add(!worklistMoves,(getItem def_I,getItem use_I)))
-            else ();
-            Splayset.app (fn d => Splayset.app (fn l => AddEdge(l,d)) (liveO_I)) def_I
-          end
-          fun listToN a b =
-            case Int.compare(a,b) of
-              EQUAL => [b]
-              | LESS => a::listToN (a+1) b
-              | GREATER => raise Fail "No deberia pasar"
-          val _ = List.app (fn (i,n) => aux (i,n)) (ListPair.zip (instrs,listToN 1 (List.length instrs)))
+          | aux (inst,n) =
+            let
+              val def_I = getDst inst
+              val use_I = getSrc inst
+              val liveO_I = Splaymap.find(!liveOut,n)
+            in
+              if (isMove inst) (* Si es una instruccion move, def_I y use_I tienen un solo elemento *)
+              then (
+                    moveList := Splaymap.insert(!moveList,getItem def_I,Splayset.add(GetMoveList (getItem def_I),(getItem def_I,getItem use_I)));
+                    moveList := Splaymap.insert(!moveList,getItem use_I,Splayset.add(GetMoveList (getItem use_I),(getItem def_I,getItem use_I)));
+                    worklistMoves := Splayset.add(!worklistMoves,(getItem def_I,getItem use_I)))
+              else ();
+              Splayset.app (fn d => Splayset.app (fn l => AddEdge(l,d)) (liveO_I)) def_I
+            end
+        fun listToN a b =
+          case Int.compare(a,b) of
+            EQUAL => [b]
+            | LESS => a::listToN (a+1) b
+            | GREATER => raise Fail "No deberia pasar"
+        val _ = List.app (fn (i,n) => aux (i,n)) (ListPair.zip (instrs,listToN 1 (List.length instrs)))
       in () end
 
     fun NodeMoves n = Splayset.intersection(GetMoveList n,Splayset.union(!activeMoves,!worklistMoves))

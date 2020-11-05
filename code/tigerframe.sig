@@ -6,7 +6,7 @@ type register = string
 
 datatype access = InFrame of int | InReg of tigertemp.label
 datatype frag = PROC of {body: tigertree.stm, frame: frame}
-	| STRING of tigertemp.label * string
+  | STRING of tigertemp.label * string
 
 (* Algunos registros especiales *)
 val rv  : tigertemp.temp
