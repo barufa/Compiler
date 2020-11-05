@@ -3,7 +3,7 @@ let
 	var lista:=vector[100] of 0
 
 	function printVector(vec : vector,len : int) =
-	(	(for i := 0 to len do /*Falla el valor de len. Si fijo una constante funciona*/
+	(	(for i := 0 to len-1 do /*Falla el valor de len. Si fijo una constante funciona*/
 		 	(print(chr(65+vec[i]));print(" "))
 		);print("\n")
 	)
@@ -17,7 +17,7 @@ let
 	(let 
 			var mx:=0
 		in 
-			((for i := 0 to len do 
+			((for i := 0 to len-1 do 
 				(if v[i]>v[mx] then (mx := i;()))
 			);mx)
 	end)
@@ -35,7 +35,7 @@ let
 		(let 
 			var mx:=0
 		in 
-			((for i := 0 to len do 
+			((for i := 0 to len-1 do 
 				(if v[i]>v[mx] then (mx := i;()))
 			);mx)
 		end)
