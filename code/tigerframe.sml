@@ -53,8 +53,8 @@ val sp = "rsp"      (* stack pointer *)
 (* Revisar callersaves*)
 val specialregs = [fp, sp]                                                        (* special purpose registers *)
 val argsregs = ["rdi", "rsi", "rcx", "rdx", "r8", "r9"]                           (* registers that hold arguments *)
-val callersaves = ["rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9"]                 (* registers that must be preserved by the caller *)
-val calleesaves = ["rbx", "r10", "r11", "r12", "r13", "r14", "r15"]               (* registers that must be preserved by the callee *)
+val callersaves = ["rax", "rcx", "rdx", "rsi", "rdi", "r8", "r9", "r10", "r11"]   (* registers that must be preserved by the caller *)
+val calleesaves = ["rbx", "r12", "r13", "r14", "r15"]                             (* registers that must be preserved by the callee *)
 val machineregs = callersaves @ calleesaves                                       (* all registers available for coloring *)
 
 fun allocMem(k) = InFrame k
