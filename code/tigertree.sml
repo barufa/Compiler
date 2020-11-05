@@ -14,6 +14,8 @@ struct
 		| SEQ of stm*stm
 		| LABEL of tigertemp.label
         | COMMENT of string
+        | PUSH of string
+        | POP of string
 	and binop = PLUS | MINUS | MUL | DIV | AND | OR
 		  | LSHIFT | RSHIFT | ARSHIFT | XOR
 	and relop = EQ | NE | LT | GT | LE | GE | ULT | ULE

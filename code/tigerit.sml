@@ -21,7 +21,9 @@ fun tree s0 =
 		| stm(MOVE(a,b),d) = indent(d)^sayln("MOVE(")^exp(a,d+1)^
 			sayln(",")^exp(b,d+1)^say(")")
         | stm(EXP e, d) = indent(d)^sayln("EXP(")^exp(e,d+1)^say(")")
-        | stm(COMMENT c, d) = indent(d)^sayln("#")^c    
+        | stm(COMMENT c, d) = indent(d)^sayln("#"^c)    
+        | stm(PUSH c, d) = indent(d)^sayln("PUSH("^c^")")
+        | stm(POP c, d) = indent(d)^sayln("POP("^c^")")
 		and exp(BINOP(p,a,b),d) = indent(d)^say("BINOP(")^binop(p)^sayln(",")^
 			exp(a,d+1)^sayln(",")^exp(b,d+1)^say(")")
 		| exp(MEM(e),d) = indent(d)^sayln("MEM(")^exp(e,d+1)^say(")")

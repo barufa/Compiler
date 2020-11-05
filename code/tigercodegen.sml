@@ -34,7 +34,9 @@ let val ilist = ref ([]:instr list)
 					end
       | munchStm (SEQ (e1, e2)) = (munchStm e1; munchStm e2)
       | munchStm (LABEL l) = emitL(l)
-      | munchStm (COMMENT c) = emit(tigerassem.IOPER {assem = "#"^c^"\n",dst = [],src = [],jump = NONE})
+      | munchStm (COMMENT c) = emit(tigerassem.IOPER {assem = "#"^c,dst = [],src = [],jump = NONE})
+      | munchStm (PUSH r) = emit(tigerassem.IOPER {assem = "pushq %"^r,dst = [],src = [],jump = NONE})
+      | munchStm (POP r) = emit(tigerassem.IOPER {assem = "popq %"^r,dst = [],src = [],jump = NONE})
       | munchStm _ = raise Fail "Casos no cubiertos en tigercodegen.munchStm"
 
 	(* munchExp: Tree.exp -> Temp.temp

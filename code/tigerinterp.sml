@@ -312,6 +312,8 @@ struct
 		| evalStm(SEQ(_,_)) = raise Fail("No canonizado\n")
 		| evalStm(LABEL _) = NONE
         | evalStm(COMMENT _) = NONE
+        | evalStm(PUSH _) = NONE
+        | evalStm(POP _) = NONE
 		(* Ejecuta una llamada a función *)
 		and evalFun(f, args) =
 			let
