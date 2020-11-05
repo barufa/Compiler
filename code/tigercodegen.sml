@@ -77,7 +77,7 @@ let val ilist = ref ([]:instr list)
                                                            emitO("movq $0, %'d0",[],["rdx"],NONE);
                                                            emitO("idivq %'s2, %rax",["rax","rdx",munchExp e2],["rax","rdx"],NONE);
                                                            emitM("movq %'s0, %'d0","rax",r)))
-      | munchExp (MEM e) = result (fn r => emitM("movq (%'s0), %'d0",munchExp e,r))
+      | munchExp (MEM e) = result (fn r => emitO("movq (%'s0), %'d0",[munchExp e],[r],NONE))
 	  | munchExp (CALL f) = result (fn r => let val _ = munchStm(EXP(CALL f)) in emitM("movq %'s0, %'d0",rv,r) end)
       | munchExp (ESEQ _) = raise Fail "ESEQ no deberia aparecer aqui."
       | munchExp exp = raise Fail "Casos no cubiertos en tigercodegen.munchExp"
