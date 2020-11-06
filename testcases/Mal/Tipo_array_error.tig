@@ -1,0 +1,7 @@
+/* error : d no es una arreglo */
+let 
+	var d :=0
+in
+	d[3]
+end
+

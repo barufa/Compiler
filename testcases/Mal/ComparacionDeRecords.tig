@@ -1,3 +1,4 @@
+/* error : error en comparacion de records*/
 let type R = {i:int}
     var r1:R:=nil
     type R = {i:int}

@@ -1,0 +1,2 @@
+/* error : cuerpo del while tiene que ser tipo unit */
+while (10 > 5) do 5+6

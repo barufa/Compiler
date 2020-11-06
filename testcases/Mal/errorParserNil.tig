@@ -1,7 +1,6 @@
-/* error : syntax error, nil should not be preceded by type-id.  */
+/* error : error de sintaxis, nil no debe ser precedido por el tipo.  */
 let
 	type rectype = {name : string, id : int}
-
 	var a := rectype nil
 in
 	a

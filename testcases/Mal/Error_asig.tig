@@ -1,0 +1,6 @@
+/* error : error en tipo de asignacion */
+let 
+	var a : int := " "
+in
+	a
+end

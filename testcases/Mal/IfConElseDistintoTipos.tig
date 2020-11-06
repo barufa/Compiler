@@ -1,1 +1,2 @@
+/* error : tipos en if y else distintos */
 if 2>3 then 2 else "hola"

@@ -1,2 +1,3 @@
+/* error : tipo erroneo en declaracion de variable*/
 let var s:string:=5
 in 0 end

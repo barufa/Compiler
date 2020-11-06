@@ -1,3 +1,4 @@
+/* error : funciones mutuamente recursivas de distinto batch */
 let
     var a:=0
     function g(x:int,y:int):int = f(x,y)

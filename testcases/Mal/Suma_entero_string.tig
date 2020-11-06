@@ -1,0 +1,3 @@
+/* error : suma de entero con string */
+
+3 + "var"

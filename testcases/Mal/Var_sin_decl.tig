@@ -1,0 +1,3 @@
+/* error : variable i sin declarar */
+
+while 10 > 5 do (i+1; ())

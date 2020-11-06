@@ -1,3 +1,4 @@
+/* error : funcion y variable comparten nombre */
 let
    type a = int
    var a : a := 2

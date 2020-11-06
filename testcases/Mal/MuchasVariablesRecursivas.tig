@@ -1,3 +1,4 @@
+/* error : variables comparten nombre */
 let var x:=x+1
     var x:=x+x
     var x:=1

@@ -1,0 +1,2 @@
+/* error: break fuera del loop */
+if 1 then break

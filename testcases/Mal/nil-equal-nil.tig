@@ -1,1 +1,2 @@
+/* error : comparacion de nil con nil */
 nil = nil

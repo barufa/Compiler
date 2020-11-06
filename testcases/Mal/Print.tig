@@ -1,1 +1,2 @@
+/* error : no se retorna un int */
 print("Hola")

@@ -1,3 +1,4 @@
+/* error : declaracion de tipos obligatoria*/
 let type R = {}
     var r:= nil
 in 0 end

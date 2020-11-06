@@ -1,2 +1,3 @@
+/* error : argumentos en f repetidos */
 let function f(x:int, x:int):int = x
 in f(1,2) end

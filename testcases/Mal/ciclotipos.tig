@@ -1,5 +1,6 @@
+/* error : tipos ciclicos*/
 let var x := "1"
     type A = B
     type B = C
-	type C = A
+    type C = A
 in x end
