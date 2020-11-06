@@ -47,8 +47,6 @@ fun fillreg (x::xs) src dst jmp =
            in List.nth(ls,n)^(fillreg ys src dst jmp) end
   | fillreg [] _ _ _ = ""
 
-(**********************************************)
-
 fun formatCode (IOPER{assem,src,dst,jump}) =
       let 
         val jmp = if jump = NONE then [] else valOf jump
@@ -58,9 +56,7 @@ fun formatCode (IOPER{assem,src,dst,jump}) =
       let val s = fillreg (String.explode assem) [src] [dst] []
       in print(s^"\n") end
   | formatCode (ILABEL{assem,...}) = print(assem^"\n")
-(*
   | formatCode _                           = raise Fail "format: Caso no contemplado"
-*)
 
 fun format mapRegister (ILABEL{assem,lab}) = assem
   | format mapRegister (IMOVE{assem,dst,src}) = let val s = fillreg (String.explode assem) [findDic mapRegister src] [findDic mapRegister dst] []
@@ -71,9 +67,7 @@ fun format mapRegister (ILABEL{assem,lab}) = assem
                                                       val jmp = if jump = NONE then [] else valOf jump
                                                       val s = fillreg (String.explode assem) rsrc rdst jmp
                                                      in s end
-(*
   | format _           _ = raise Fail "format: Caso no contemplado"
-*)
 
 fun showCode (ILABEL{assem,...}) = assem
   | showCode (IOPER{assem,src,dst,jump}) =
