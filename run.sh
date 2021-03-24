@@ -40,7 +40,7 @@ do
 	echo "------------------------------------------"
 	echo -e "Programa ${green}${bold}$file${normal}${nocolor}:"
 	./tiger "$dir/testcases/Bien/$i"
-	./$file
+	./$file <<< "0 1 3 5 7 9 10 12 1024 x 2 4 6 8 11 77 x" #Input only use for merge.tig
 	rm -f "$dir/$file" "$dir/$file.s"
 	echo "------------------------------------------"
 done
